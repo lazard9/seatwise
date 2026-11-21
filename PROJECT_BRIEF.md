@@ -316,8 +316,9 @@ Each phase ends with passing tests, lint, and build. Do not start the next phase
 | 4 | Favorites | Toggle, list, `is_favorite` in event responses, optimistic UI |
 | 5 | Reviews | Eligibility rules, aggregates in a transaction, edit/delete |
 | 6 | Comments | Threads, edit, delete with placeholder, moderation |
-| 7 | Delivery | Production compose with Nginx, health checks, image build in CI, smoke test |
-| 8 | Polish | Accessibility pass, empty and error states everywhere, README with screenshots |
+| 7 | Reserved seating | Seat layouts, seat holds with expiry, choosing seats on a seat map. See section 13 |
+| 8 | Delivery | Production compose with Nginx, health checks, image build in CI, smoke test |
+| 9 | Polish | Accessibility pass, empty and error states everywhere, README with screenshots |
 
 ## 11. Testing
 
@@ -330,3 +331,14 @@ Each phase ends with passing tests, lint, and build. Do not start the next phase
 ## 12. Out of scope
 
 Payments, email sending, password reset, waitlists, recurring events, maps, real-time updates. Each can be added later without changing the model above.
+
+## 13. Reserved seating (phase 7)
+
+Phases 1 to 6 use general admission: an event has a capacity and a reservation takes a number of seats. Phase 7 adds events where attendees choose specific seats. This section is an outline; it is detailed into rules, API and tests before phase 7 starts.
+
+- An event has `seating`: `general` (default, everything above) or `reserved`.
+- A reserved event has a layout: sections, rows and seats, each seat with a stable label such as `A-12`. Capacity is the number of seats in the layout.
+- Choosing seats creates a **hold** that expires after a few minutes (TTL index). Held seats are unavailable to others. Confirming turns the hold into a reservation; an expired hold frees its seats on its own.
+- Each seat of an event is taken at most once. A unique index on `(event_id, seat_label)` over holds and confirmed seats makes the database reject the second taker, so no check-then-write race exists.
+- A reservation keeps `seats` as a count and adds `seat_labels` for reserved events, so the general admission flow, `seats_taken`, cancellation and reviews stay unchanged.
+- The frontend shows a seat map that works with a keyboard and a screen reader, not only with a mouse.

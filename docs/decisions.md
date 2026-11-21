@@ -56,6 +56,12 @@ Each entry records a choice the brief left open or changed: the date, the decisi
 - **Reason:** On Windows, a shell that starts in `d:\` makes Vitest load its own module twice, and every test file fails with "failed to find the current suite". Changing `root` or `setupFiles` in the config does not fix it. On Linux the launcher changes nothing.
 - **Rejected:** Vitest globals (every future `import from 'vitest'` would still break), asking contributors to open the folder as `D:\`.
 
+## 2026-11-21: Reserved seating is phase 7
+
+- **Decision:** Choosing specific seats is added as phase 7, after comments. Delivery and polish move to phases 8 and 9. Until then events use general admission as in the brief.
+- **Reason:** It fits the product and adds a second concurrency problem (seat holds that expire), but it depends on events and reservations working first. Keeping `seats` as a count and adding `seat_labels` later means phases 1 to 6 need no rework.
+- **Rejected:** Building it into phase 3 (doubles the hardest phase), leaving it out.
+
 ## 2026-11-21: Removed "pin limit" from the 409 list
 
 - **Decision:** The status code table no longer lists a pin limit.
