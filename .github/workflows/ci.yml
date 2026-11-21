@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      MONGODB_URL: mongodb://localhost:27017/?replicaSet=rs0
+    steps:
+      - uses: actions/checkout@v7
+
+      # Service containers cannot take command arguments, so MongoDB is started
+      # by hand as the single-node replica set that transactions need.
+      - name: Start MongoDB 9.0 replica set
+        working-directory: .
+        run: |
+          docker run -d --name mongo -p 27017:27017 mongo:9.0 --replSet rs0 --bind_ip_all
+          for i in $(seq 1 30); do
+            docker exec mongo mongosh --quiet --eval 'db.runCommand({ ping: 1 }).ok' && break
+            sleep 1
+          done
+          docker exec mongo mongosh --quiet --eval \
+            'rs.initiate({ _id: "rs0", members: [{ _id: 0, host: "localhost:27017" }] })'
+          for i in $(seq 1 30); do
+            state=$(docker exec mongo mongosh --quiet --eval 'rs.status().myState')
+            [ "$state" = "1" ] && echo "MongoDB is PRIMARY" && exit 0
+            sleep 1
+          done
+          echo "Replica set did not become PRIMARY" && docker logs mongo && exit 1
+
+      - uses: astral-sh/setup-uv@v10
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Check formatting
+        run: uv run ruff format --check .
+
+      - name: Test
+        run: uv run pytest -q
+
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm run test
+
+      - name: Build
+        run: npm run build
