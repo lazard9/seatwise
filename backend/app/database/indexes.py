@@ -8,6 +8,12 @@ INDEXES: dict[str, list[IndexModel]] = {
     "users": [
         IndexModel([("email", ASCENDING)], unique=True, name="email_unique"),
     ],
+    "refresh_tokens": [
+        IndexModel([("token_hash", ASCENDING)], unique=True, name="token_hash_unique"),
+        IndexModel([("family_id", ASCENDING)], name="family_id"),
+        # MongoDB deletes each row once its expires_at has passed.
+        IndexModel([("expires_at", ASCENDING)], expireAfterSeconds=0, name="expires_at_ttl"),
+    ],
 }
 
 

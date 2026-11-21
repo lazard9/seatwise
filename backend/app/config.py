@@ -21,6 +21,12 @@ class Settings(BaseSettings):
     mongodb_timeout_ms: int = Field(default=5000, ge=100)
     jwt_secret: str
     access_token_expire_minutes: int = Field(default=15, ge=1, le=60)
+    refresh_token_expire_days: int = Field(default=7, ge=1, le=90)
+    # A rotated refresh token is still accepted this long, so two tabs that
+    # refresh at the same moment do not sign the user out.
+    refresh_grace_seconds: int = Field(default=10, ge=0, le=60)
+    # Off for local http; must be on in production (https).
+    refresh_cookie_secure: bool = False
     # NoDecode: the env value is a comma-separated string, not JSON.
     cors_origins: Annotated[list[str], NoDecode] = ["http://localhost:5173"]
 

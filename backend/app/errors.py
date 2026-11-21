@@ -45,16 +45,21 @@ class Conflict(DomainError):
     default_code = "CONFLICT"
 
 
-async def domain_error_handler(_request: Request, exc: Exception) -> JSONResponse:
-    # Registered for DomainError only; the signature is Starlette's generic one.
-    if not isinstance(exc, DomainError):
-        raise exc
+def error_response(exc: DomainError) -> JSONResponse:
+    """The response the handler sends. Routes use it when they must add to it, e.g. a cookie."""
     headers = {"WWW-Authenticate": "Bearer"} if isinstance(exc, Unauthorized) else None
     return JSONResponse(
         status_code=exc.status_code,
         content={"detail": exc.detail, "code": exc.code},
         headers=headers,
     )
+
+
+async def domain_error_handler(_request: Request, exc: Exception) -> JSONResponse:
+    # Registered for DomainError only; the signature is Starlette's generic one.
+    if not isinstance(exc, DomainError):
+        raise exc
+    return error_response(exc)
 
 
 def register_error_handlers(app: FastAPI) -> None:

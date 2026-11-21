@@ -11,7 +11,7 @@ The project is built around the problems the domain forces:
 - **Rules that depend on time and history:** you can review only an event you attended, after it ended.
 - **Moderation:** comments written by one user, hidden by another.
 
-> **Status:** phase 0 done: backend and frontend skeletons, tests and CI. Next: phase 1, auth and users. See [PROJECT_BRIEF.md](PROJECT_BRIEF.md) for the full specification and the phase plan.
+> **Status:** phase 1 in progress. Register, login, refresh rotation and logout are done; admin user routes and the frontend sign-in come next. See [docs/progress.md](docs/progress.md) for where the work stands and [PROJECT_BRIEF.md](PROJECT_BRIEF.md) for the full specification.
 
 ## Stack
 
@@ -32,10 +32,14 @@ Interactive docs: <http://localhost:8000/docs>. Errors from business rules have 
 | Method | Path | Notes |
 | --- | --- | --- |
 | POST | `/auth/register` | Body `{email, password, display_name}`. 201 with the user; role is always `attendee`. 409 `EMAIL_TAKEN` |
-| POST | `/auth/login` | Body `{email, password}`. 200 with `access_token` (15 minutes), `expires_in` and the user. 401 `INVALID_CREDENTIALS` |
+| POST | `/auth/login` | Body `{email, password}`. 200 with `access_token` (15 minutes), `expires_in` and the user, and sets the refresh cookie. 401 `INVALID_CREDENTIALS` |
+| POST | `/auth/refresh` | No body; reads the refresh cookie. 200 with a new access token and the user, and replaces the cookie. 401 `NOT_AUTHENTICATED`, `INVALID_REFRESH_TOKEN` or `REFRESH_TOKEN_REUSED`, and clears the cookie |
+| POST | `/auth/logout` | 204. Ends this session only (other devices stay signed in) and clears the cookie. Needs no access token |
 | GET | `/auth/me` | The signed-in user. Needs `Authorization: Bearer <token>` |
 
-401 codes: `NOT_AUTHENTICATED` (no token), `INVALID_TOKEN`, `TOKEN_EXPIRED`. The role is read from the database on every request, never from the token.
+401 codes for the access token: `NOT_AUTHENTICATED` (no token), `INVALID_TOKEN`, `TOKEN_EXPIRED`. The role is read from the database on every request, never from the token.
+
+The refresh token lives in the `seatwise_refresh` cookie: `HttpOnly`, `SameSite=Lax`, path `/auth`, 7 days, `Secure` when `REFRESH_COOKIE_SECURE=true`. Each refresh replaces it. A replaced token sent again more than 10 seconds later means it was copied, so that session is closed. Clients call `/auth/refresh` on start to restore a session, and again when the access token expires.
 
 Field rules: email is stored lowercased; password 8 to 128 characters; display name 2 to 50 characters.
 

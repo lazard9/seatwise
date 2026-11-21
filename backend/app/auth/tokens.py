@@ -1,3 +1,5 @@
+import hashlib
+import secrets
 from datetime import timedelta
 
 import jwt
@@ -40,3 +42,17 @@ def decode_access_token(token: str, settings: Settings) -> str:
     if claims["type"] != ACCESS_TOKEN_TYPE or not isinstance(claims["sub"], str):
         raise Unauthorized("Invalid access token", code="INVALID_TOKEN")
     return claims["sub"]
+
+
+def new_refresh_token() -> str:
+    """A random, opaque refresh token. Not a JWT: only the database can vouch for it."""
+    return secrets.token_urlsafe(32)
+
+
+def hash_refresh_token(token: str) -> str:
+    """SHA-256 hex digest. The database stores only this, so a leaked dump cannot be replayed.
+
+    A fast hash is enough here: the token has 256 random bits, so there is
+    nothing to brute-force, unlike a password.
+    """
+    return hashlib.sha256(token.encode()).hexdigest()

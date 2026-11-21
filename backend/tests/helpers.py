@@ -1,8 +1,9 @@
 from typing import Any
 
-from httpx import AsyncClient
+from httpx import AsyncClient, Response
 from pymongo.asynchronous.database import AsyncDatabase
 
+from app.auth.cookies import REFRESH_COOKIE
 from app.models.users import Role, UserCreate
 from app.services.users import create_user
 
@@ -29,3 +30,17 @@ async def login(client: AsyncClient, email: str, password: str = DEFAULT_PASSWOR
 
 def bearer(token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
+
+
+def refresh_cookie(response: Response) -> str:
+    """The refresh token a response set, read from its Set-Cookie header."""
+    token = response.cookies.get(REFRESH_COOKIE)
+    assert token, f"no {REFRESH_COOKIE} cookie in {response.headers.get_list('set-cookie')}"
+    return token
+
+
+async def login_session(client: AsyncClient, email: str) -> tuple[str, str]:
+    """Sign in and return (access token, refresh token)."""
+    response = await client.post("/auth/login", json={"email": email, "password": DEFAULT_PASSWORD})
+    assert response.status_code == 200, response.text
+    return response.json()["access_token"], refresh_cookie(response)
