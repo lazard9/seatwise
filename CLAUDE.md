@@ -2,10 +2,12 @@
 
 Instructions for the agent working on this repository. Read `PROJECT_BRIEF.md` before any task; it is the source of truth for the domain, rules, API, and phases.
 
+At the start of a session read `docs/progress.md` to see where the work stands, and update it when a step is done. `docs/patterns.md` describes the approaches for auth, errors, uploads, URL state and slugs.
+
 ## 1. Workspace
 
 - This repository is a new project. Everything in it is written for the events domain.
-- A reference project may be open in the same workspace. It is **read-only** and used only to look at how a pattern was solved.
+- A reference project may be open in the same workspace. It is **read-only** and not needed: `docs/patterns.md` describes the patterns to follow.
 - **Never copy, move, or rename files from the reference project.** Never paste code from it. Write each file fresh for this domain, using the brief as the specification.
 - If a task seems to need something from the reference project, describe the pattern in your own words and implement it from scratch.
 - Local development runs without Docker. MongoDB 9.0 runs as a Windows service configured as the single-node replica set `rs0`. Connection string: `mongodb://localhost:27017/?replicaSet=rs0`. Docker is used only for the production compose file and in CI.
