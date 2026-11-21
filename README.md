@@ -1,5 +1,7 @@
 # Seatwise
 
+[![CI](https://github.com/lazard9/seatwise/actions/workflows/ci.yml/badge.svg)](https://github.com/lazard9/seatwise/actions/workflows/ci.yml)
+
 An events platform. Organizers publish events; attendees discover them, reserve seats, save favorites, comment, and review events they attended.
 
 The project is built around the problems the domain forces:
@@ -9,7 +11,7 @@ The project is built around the problems the domain forces:
 - **Rules that depend on time and history:** you can review only an event you attended, after it ended.
 - **Moderation:** comments written by one user, hidden by another.
 
-> **Status:** phase 0, project setup. See [PROJECT_BRIEF.md](PROJECT_BRIEF.md) for the full specification and the phase plan.
+> **Status:** phase 0 done: backend and frontend skeletons, tests and CI. Next: phase 1, auth and users. See [PROJECT_BRIEF.md](PROJECT_BRIEF.md) for the full specification and the phase plan.
 
 ## Stack
 
