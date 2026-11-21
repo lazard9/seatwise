@@ -110,6 +110,7 @@ A task is done when:
 
 - Conventional prefixes: `feat:`, `fix:`, `test:`, `refactor:`, `docs:`, `chore:`, `ci:`.
 - One logical change per commit. The message says what changed and, when not obvious, why.
+- No AI attribution: no `Co-Authored-By` trailer for an assistant and no "Generated with" line in commits or pull requests. The author credits the tools himself.
 
 ## 8. Writing
 
