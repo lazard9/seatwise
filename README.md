@@ -23,6 +23,28 @@ The project is built around the problems the domain forces:
 | Tests | pytest + httpx, Vitest + Testing Library |
 | Delivery | Docker Compose for production, GitHub Actions |
 
+## API
+
+Interactive docs: <http://localhost:8000/docs>. Errors from business rules have a stable body, `{"detail": "...", "code": "..."}`; clients branch on `code`.
+
+### Auth
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| POST | `/auth/register` | Body `{email, password, display_name}`. 201 with the user; role is always `attendee`. 409 `EMAIL_TAKEN` |
+| POST | `/auth/login` | Body `{email, password}`. 200 with `access_token` (15 minutes), `expires_in` and the user. 401 `INVALID_CREDENTIALS` |
+| GET | `/auth/me` | The signed-in user. Needs `Authorization: Bearer <token>` |
+
+401 codes: `NOT_AUTHENTICATED` (no token), `INVALID_TOKEN`, `TOKEN_EXPIRED`. The role is read from the database on every request, never from the token.
+
+Field rules: email is stored lowercased; password 8 to 128 characters; display name 2 to 50 characters.
+
+### Health
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| GET | `/health` | 200 when MongoDB answers, 503 when it does not |
+
 ## Documentation
 
 - [PROJECT_BRIEF.md](PROJECT_BRIEF.md): domain, data model, rules, API, permissions and phases

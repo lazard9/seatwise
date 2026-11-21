@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     database_name: str = "seatwise"
     mongodb_timeout_ms: int = Field(default=5000, ge=100)
     jwt_secret: str
+    access_token_expire_minutes: int = Field(default=15, ge=1, le=60)
     # NoDecode: the env value is a comma-separated string, not JSON.
     cors_origins: Annotated[list[str], NoDecode] = ["http://localhost:5173"]
 
