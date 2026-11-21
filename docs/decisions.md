@@ -38,6 +38,24 @@ Each entry records a choice the brief left open or changed: the date, the decisi
 - **Reason:** Importing the module reads no settings and opens no connection, so tests build the app with their own settings and the test database.
 - **Rejected:** A module-level `app = create_app()`, which would require a valid environment just to import the module.
 
+## 2026-11-21: Frontend toolchain from the current Vite template
+
+- **Decision:** Node 26 (`.nvmrc`), Vite 8, TypeScript 7 with `strict` and `noUncheckedIndexedAccess`, oxlint for linting, Tailwind CSS 4 through its Vite plugin, Vitest 5 with jsdom.
+- **Reason:** These are what the official `create-vite` React TypeScript template ships today. oxlint replaces ESLint in that template and runs much faster.
+- **Rejected:** ESLint (adds a slower second linter with no rule we need yet).
+
+## 2026-11-21: Generated route tree is committed
+
+- **Decision:** `frontend/src/routeTree.gen.ts` is committed and ignored by the linter.
+- **Reason:** `npm run build` runs `tsc -b` before Vite, so the file must exist on a fresh checkout and in CI. The router plugin regenerates it whenever routes change.
+- **Rejected:** Ignoring it in git and generating it in a separate step.
+
+## 2026-11-21: Vitest runs through a small launcher
+
+- **Decision:** `npm run test` calls `scripts/vitest.mjs`, which starts Vitest with the drive letter of the working directory in upper case.
+- **Reason:** On Windows, a shell that starts in `d:\` makes Vitest load its own module twice, and every test file fails with "failed to find the current suite". Changing `root` or `setupFiles` in the config does not fix it. On Linux the launcher changes nothing.
+- **Rejected:** Vitest globals (every future `import from 'vitest'` would still break), asking contributors to open the folder as `D:\`.
+
 ## 2026-11-21: Removed "pin limit" from the 409 list
 
 - **Decision:** The status code table no longer lists a pin limit.

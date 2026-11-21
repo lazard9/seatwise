@@ -58,6 +58,19 @@ uv run uvicorn app.main:create_app --factory --reload
 
 The app refuses to start without a `JWT_SECRET` of at least 32 bytes.
 
+### Frontend
+
+Needs Node 26 (see `.nvmrc`; with nvm: `nvm install 26` and `nvm use 26`).
+
+```bash
+cd frontend
+npm install
+cp .env.example .env
+npm run dev
+```
+
+App: <http://localhost:5173>
+
 ### Tests and lint
 
 ```bash
@@ -65,9 +78,14 @@ cd backend
 uv run pytest -q
 uv run ruff check .
 uv run ruff format --check .
+
+cd ../frontend
+npm run test
+npm run lint
+npm run build
 ```
 
-Tests use the `seatwise_test` database on `mongodb://localhost:27017/?replicaSet=rs0` and drop it when they finish. Set `MONGODB_URL` to use another server. They never read `.env`.
+Backend tests use the `seatwise_test` database on `mongodb://localhost:27017/?replicaSet=rs0` and drop it when they finish. Set `MONGODB_URL` to use another server. They never read `.env`.
 
 ## License
 
