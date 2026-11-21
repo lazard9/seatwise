@@ -8,6 +8,7 @@ from httpx import ASGITransport, AsyncClient
 from pymongo.asynchronous.database import AsyncDatabase
 
 from app.config import Settings
+from app.database.indexes import ensure_indexes
 from app.main import create_app
 
 TEST_DATABASE = "seatwise_test"
@@ -35,7 +36,9 @@ def settings() -> Settings:
 async def app(settings: Settings) -> AsyncIterator[FastAPI]:
     application = create_app(settings)
     async with application.router.lifespan_context(application):
+        # Start from an empty test database with every index in place.
         await application.state.mongo_client.drop_database(TEST_DATABASE)
+        await ensure_indexes(application.state.db)
         yield application
         await application.state.mongo_client.drop_database(TEST_DATABASE)
 

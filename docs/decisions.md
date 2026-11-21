@@ -62,6 +62,18 @@ Each entry records a choice the brief left open or changed: the date, the decisi
 - **Reason:** It fits the product and adds a second concurrency problem (seat holds that expire), but it depends on events and reservations working first. Keeping `seats` as a count and adding `seat_labels` later means phases 1 to 6 need no rework.
 - **Rejected:** Building it into phase 3 (doubles the hardest phase), leaving it out.
 
+## 2026-11-21: Account field rules
+
+- **Decision:** Password 8 to 128 characters, no composition rules. Display name 2 to 50 characters after trimming. Email validated and stored lowercased; the unique index on `email` decides duplicates (409 `EMAIL_TAKEN`).
+- **Reason:** The brief is silent. Length matters more than character classes (NIST SP 800-63B). The upper limit keeps Argon2 input bounded. Letting the index decide means two simultaneous sign-ups cannot both succeed.
+- **Rejected:** Required digits or symbols, a find-then-insert duplicate check.
+
+## 2026-11-21: Startup fails when MongoDB is unreachable
+
+- **Decision:** The lifespan creates all indexes before the app accepts requests. If MongoDB cannot be reached, startup fails.
+- **Reason:** The brief requires indexes at startup, and running without the unique indexes would let duplicates in. A failed start is visible at once; a process manager or Docker restarts it. `/health` still reports 503 if the database goes away later.
+- **Rejected:** Starting without indexes and creating them later.
+
 ## 2026-11-21: Removed "pin limit" from the 409 list
 
 - **Decision:** The status code table no longer lists a pin limit.

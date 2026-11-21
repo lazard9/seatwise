@@ -6,6 +6,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import Settings, get_settings
 from app.database.client import create_client
+from app.database.indexes import ensure_indexes
+from app.errors import register_error_handlers
 from app.routes import health
 
 
@@ -19,6 +21,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.state.mongo_client = client
         app.state.db = client[settings.database_name]
         try:
+            # Fails fast when MongoDB is unreachable, so a broken deploy does not start.
+            await ensure_indexes(app.state.db)
             yield
         finally:
             await client.close()
@@ -34,5 +38,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_headers=["*"],
     )
 
+    register_error_handlers(app)
     app.include_router(health.router)
     return app
