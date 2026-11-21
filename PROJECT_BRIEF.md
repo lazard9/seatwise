@@ -23,7 +23,7 @@ The point of the project is the problems the domain forces:
 
 | Layer | Choice |
 | --- | --- |
-| Backend | Python 3.14, FastAPI, Uvicorn, Motor, Pydantic, PyJWT, Argon2, Pillow |
+| Backend | Python 3.14, FastAPI, Uvicorn, PyMongo (async API), Pydantic, PyJWT, Argon2, Pillow |
 | Frontend | React, TypeScript, Vite, TanStack Router, TanStack Query, Zustand, React Hook Form, Zod, Tailwind CSS, Headless UI |
 | Database | MongoDB 9.0, **run as a single-node replica set** in every environment |
 | Tests | pytest + httpx (backend), Vitest + Testing Library (frontend) |

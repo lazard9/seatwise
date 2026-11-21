@@ -15,7 +15,7 @@ The project is built around the problems the domain forces:
 
 | Layer | Choice |
 | --- | --- |
-| Backend | Python 3.14, FastAPI, Motor, Pydantic, PyJWT, Argon2, Pillow, uv |
+| Backend | Python 3.14, FastAPI, PyMongo (async), Pydantic, PyJWT, Argon2, Pillow, uv |
 | Frontend | React, TypeScript, Vite, TanStack Router, TanStack Query, Zustand, React Hook Form, Zod, Tailwind CSS |
 | Database | MongoDB 9.0 as a single-node replica set (transactions) |
 | Tests | pytest + httpx, Vitest + Testing Library |
@@ -27,7 +27,47 @@ The project is built around the problems the domain forces:
 - [CLAUDE.md](CLAUDE.md): conventions and the definition of done
 - [docs/decisions.md](docs/decisions.md): decisions and the reasons behind them
 
-Setup instructions will be added with the backend and frontend skeletons.
+## Getting started
+
+### Prerequisites
+
+- [uv](https://docs.astral.sh/uv/) (installs Python 3.14 for the project)
+- MongoDB 9.0 running as a single-node replica set. Transactions need a replica set, even with one node:
+  1. In `mongod.cfg` add:
+     ```yaml
+     replication:
+       replSetName: rs0
+     ```
+  2. Restart the MongoDB service, then run once in `mongosh`:
+     ```js
+     rs.initiate({ _id: "rs0", members: [{ _id: 0, host: "localhost:27017" }] })
+     ```
+
+### Backend
+
+```bash
+cd backend
+uv sync                      # creates .venv with Python 3.14 and all dependencies
+cp .env.example .env         # then set JWT_SECRET (the command is in the file)
+uv run uvicorn app.main:create_app --factory --reload
+```
+
+- API: <http://localhost:8000>
+- Swagger UI: <http://localhost:8000/docs>
+- Health check: <http://localhost:8000/health>
+
+The app refuses to start without a `JWT_SECRET` of at least 32 bytes.
+
+### Tests and lint
+
+```bash
+cd backend
+uv run pytest -q
+uv run ruff check .
+uv run ruff format --check .
+```
+
+Tests use the `seatwise_test` database on `mongodb://localhost:27017/?replicaSet=rs0` and drop it when they finish. Set `MONGODB_URL` to use another server. They never read `.env`.
 
 ## License
 

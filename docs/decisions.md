@@ -26,6 +26,18 @@ Each entry records a choice the brief left open or changed: the date, the decisi
 - **Reason:** One tool, reproducible lock file, fast installs locally and in CI.
 - **Rejected:** `pip` with `requirements.txt` files.
 
+## 2026-11-21: PyMongo async API instead of Motor
+
+- **Decision:** The backend talks to MongoDB through `pymongo.AsyncMongoClient`.
+- **Reason:** Motor is deprecated. MongoDB replaced it with the async API built into PyMongo, which supports sessions and transactions the same way.
+- **Rejected:** Motor, as listed in the original brief.
+
+## 2026-11-21: App factory, started with `--factory`
+
+- **Decision:** `app.main.create_app(settings)` builds the app. There is no module-level `app`. Uvicorn runs it with `uvicorn app.main:create_app --factory`.
+- **Reason:** Importing the module reads no settings and opens no connection, so tests build the app with their own settings and the test database.
+- **Rejected:** A module-level `app = create_app()`, which would require a valid environment just to import the module.
+
 ## 2026-11-21: Removed "pin limit" from the 409 list
 
 - **Decision:** The status code table no longer lists a pin limit.

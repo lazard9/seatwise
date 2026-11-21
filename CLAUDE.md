@@ -97,7 +97,7 @@ Rules:
 
 A task is done when:
 
-1. Backend: `pytest -q` passes, `ruff check` and `ruff format --check` are clean.
+1. Backend (from `backend/`): `uv run pytest -q` passes, `uv run ruff check .` and `uv run ruff format --check .` are clean.
 2. Frontend: `npm run test`, `npm run lint`, and `npm run build` pass.
 3. New behavior is covered by tests as described above.
 4. API changes are reflected in the README API section.
