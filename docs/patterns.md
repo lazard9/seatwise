@@ -7,7 +7,7 @@ Approaches this project follows, written as requirements. They describe what to 
 - **Access token:** a short-lived JWT (15 minutes) returned in the login and refresh response body. The frontend keeps it in memory only, never in `localStorage`.
 - **Refresh token:** a random string (not a JWT) in an `httpOnly`, `SameSite=Lax` cookie scoped to the auth path. `Secure` is configurable and on in production. Lifetime 7 days.
 - The database stores only a SHA-256 hash of each refresh token, with `user_id`, `family_id`, `expires_at`, and when it was used or revoked. A TTL index on `expires_at` removes old rows.
-- **Rotation:** every refresh marks the presented token as used and issues a new one in the same family.
+- **Rotation:** every refresh marks the presented token as used and issues a new one in the same family, in one transaction. The new token gets the full lifetime again (sliding session).
 - **Reuse detection:** presenting a token that was already rotated means it was copied, so the whole family is revoked and the user must sign in again.
 - **Grace period:** a token reused within 10 seconds of its rotation is accepted, so two tabs refreshing at the same moment do not sign the user out. This needs a concurrency test.
 - **Logout** revokes the current family only; other devices stay signed in.

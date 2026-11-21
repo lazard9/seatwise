@@ -79,3 +79,21 @@ Each entry records a choice the brief left open or changed: the date, the decisi
 - **Decision:** The status code table no longer lists a pin limit.
 - **Reason:** Nothing in the events domain is pinned; the entry was left over from an earlier project.
 - **Rejected:** Keeping it.
+
+## 2026-11-21: Refresh rotation runs in a transaction
+
+- **Decision:** One refresh reads the presented token, marks it used and inserts the next token in a single transaction. Every successful refresh writes the presented row, also inside the grace period. Revoking a family is a transaction too. Expected failures are returned from the transaction, not raised, and the family is revoked after it.
+- **Reason:** Two refreshes of the same token, or a refresh racing a revocation, then write the same document. MongoDB lets only one commit and the driver reruns the other, which sees the new state. Without this, a token issued during a revocation could survive it. Raising inside the transaction would also roll back the revocation.
+- **Rejected:** A find followed by separate writes (lost races), a lock collection (more moving parts for the same result).
+
+## 2026-11-21: Refresh sessions slide, the grace period is 10 seconds
+
+- **Decision:** Each refresh gives the new token a full 7 days, so an active user stays signed in. A rotated token is accepted again for 10 seconds; each such reuse gets its own next token in the same family. After that, reuse revokes the family.
+- **Reason:** Tabs share one cookie, and two of them can send the same token before either sees the new one. The cost is that a copied token used within those 10 seconds is not detected; the brief asks for the grace period.
+- **Rejected:** A fixed lifetime from sign-in (signs out active users every week), no grace period (the two-tab test fails: 4 of 5 tabs got 401).
+
+## 2026-11-21: Refresh cookie details
+
+- **Decision:** Cookie `seatwise_refresh`, path `/auth`, `HttpOnly`, `SameSite=Lax`, `Secure` from `REFRESH_COOKIE_SECURE`. A failed refresh clears it. Logout needs no access token and always returns 204.
+- **Reason:** Path `/auth` keeps the cookie off every other API call. `SameSite=Lax` stops other sites from sending it with a POST, which covers CSRF for the two cookie routes. Logout must work after the access token has expired, and a page that signs out should never see an error.
+- **Rejected:** Path `/auth/refresh` only (logout also needs the cookie), a CSRF token (not needed with `SameSite=Lax` and no state change on GET).

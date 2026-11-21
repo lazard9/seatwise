@@ -30,13 +30,13 @@ Steps, one or more commits each:
 
 1. [x] Domain errors and the `{"detail", "code"}` error body, user model, Argon2 password hashing, users index
 2. [x] Register, login, access token, `/auth/me`
-3. [ ] Refresh token rotation with reuse detection, logout, two-tab concurrency test
+3. [x] Refresh token rotation with reuse detection, logout, two-tab concurrency test
 4. [ ] Roles, admin routes `GET /users` and `PATCH /users/{id}/role`, a test per role
 5. [ ] Frontend: auth store, API client with refresh on 401, login and register pages, route guards, admin users page
 
 ## Next step
 
-Phase 1, step 3: refresh token rotation with reuse detection, logout, two-tab concurrency test.
+Phase 1, step 4: admin routes `GET /users` and `PATCH /users/{id}/role` (an admin cannot change their own role), with a test per role.
 
 ## Local environment
 
