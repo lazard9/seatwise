@@ -8,7 +8,7 @@ Where the project stands. Update this file at the end of every work session and 
 | --- | --- | --- |
 | 0 | Skeleton | Done |
 | 1 | Auth and users | Done |
-| 2 | Events | Not started |
+| 2 | Events | In progress |
 | 3 | Reservations | Not started |
 | 4 | Favorites | Not started |
 | 5 | Reviews | Not started |
@@ -34,11 +34,9 @@ Where the project stands. Update this file at the end of every work session and 
 
 At the end: 134 backend tests, 127 frontend tests.
 
-## Phase 2: Events (not started)
+## Phase 2: Events (in progress)
 
-Planned steps:
-
-1. [ ] Event model and rules: create, edit, get by id and slug, statuses (draft, publish, cancel), slugs with Serbian transliteration, ownership, indexes
+1. [x] Event model and rules: create, edit, get by id and slug, statuses (draft, publish, cancel), delete, slugs with Serbian transliteration, ownership, indexes. 212 backend tests
 2. [ ] Public list: filters, sort, pagination, past events, `/events/cities`
 3. [ ] Image upload pipeline: content check, resize, WebP, EXIF stripped, local storage behind a protocol, placeholders
 4. [ ] Frontend: home page list with filters in the URL, event page
@@ -46,7 +44,7 @@ Planned steps:
 
 ## Next step
 
-Phase 2, step 1: event model, create, edit, get, statuses and slugs, with a test per rule and per role.
+Phase 2, step 2: public list with filters, sort, pagination, past events and `/events/cities`.
 
 ## Local environment
 

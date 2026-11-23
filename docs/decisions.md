@@ -139,3 +139,39 @@ Each entry records a choice the brief left open or changed: the date, the decisi
 - **Decision:** A guest on a guarded page goes to `/login?redirect=<path>` and returns there after signing in. The target must start with one `/`; anything else goes to `/`. A signed-in user without the role sees a "No access" page inside the normal layout. Signing up signs the user in at once.
 - **Reason:** A `redirect` that accepts `//other.site` sends users to another site after they type their password (open redirect). Showing "No access" tells the user why, where a silent redirect home would look like a bug. Asking for the password twice after sign-up adds a step for nothing.
 - **Rejected:** Redirecting a wrong role to `/`, a separate sign-in step after sign-up.
+
+## 2026-11-23: Event states and who may change them
+
+- **Decision:** A new event is always a draft. `publish` goes from draft to published only. `cancel` works from draft or published. Any other transition is 400 `INVALID_TRANSITION`. A cancelled event cannot be edited (409 `EVENT_CANCELLED`). An event counts as past once `ends_at` has passed; after that only an admin may edit, publish or cancel it (403 `EVENT_PAST`).
+- **Reason:** Publishing as a separate step lets an organizer check the event before anyone sees it. Allowing cancel on a draft gives organizers a way to drop a draft, since delete is admin only. Using the end, not the start, as "past" keeps a running festival editable and listed.
+- **Rejected:** A `status` field in the create body (two ways to publish), cancel from published only (a draft could never be removed by its organizer).
+
+## 2026-11-23: Hidden events answer 404, cancelled events are hidden
+
+- **Decision:** A draft or cancelled event is 404 `EVENT_NOT_FOUND` for anyone but its organizer and admins, the same as a missing event. Another organizer editing a published event they can see gets 403 `NOT_EVENT_OWNER`.
+- **Reason:** The brief makes only published events public. A 403 would tell a stranger that a draft with that id or slug exists.
+- **Open question:** attendees who had a reservation may want to open a cancelled event by its link and see that it was cancelled. Phase 3 can make cancelled events readable by link if wanted.
+
+## 2026-11-23: Slugs are picked before insert and retried on a clash
+
+- **Decision:** The slug is read from the title with Serbian transliteration, cut to 80 characters at a word boundary, and falls back to `event`. The service reads the taken `base` and `base-N` slugs, picks the first free one, and inserts. If the unique index rejects it because another create won, it picks again (up to 10 times).
+- **Reason:** The unique index is the only check that holds under concurrency. A test creates five events with one title at once and gets five slugs; with one attempt it fails.
+- **Rejected:** A random suffix (ugly links), a counter collection (one more collection for a rare race).
+
+## 2026-11-23: Edits check their conditions in the write itself
+
+- **Decision:** `PUT /events/{id}` replaces all editable fields. The update filter requires `seats_taken <= capacity` and a status other than cancelled, so a reservation or a cancel that lands after the first read cannot be overwritten. When the filter misses, the service reads again to return the right code.
+- **Reason:** Checking capacity in Python and then writing leaves a gap where a reservation can push `seats_taken` above the new capacity.
+- **Rejected:** A transaction for a single-document update (the conditional write is enough).
+
+## 2026-11-23: Cancel and delete run in transactions with reservations
+
+- **Decision:** Cancel sets the event to cancelled and its confirmed reservations to cancelled with `cancelled_by: organizer` in one transaction. Seats are not released. Delete is admin only and refuses an event with any reservation, confirmed or cancelled (409 `EVENT_HAS_RESERVATIONS`); the check and the delete share one transaction.
+- **Reason:** The brief requires cancel to be atomic. Cancelled reservations are history that points at the event, so deleting it would leave them dangling. A reservation commit also writes the event, so it conflicts with a delete in progress and one of the two is retried.
+- **Rejected:** Allowing delete when only cancelled reservations remain (breaks "my reservations" history).
+
+## 2026-11-23: Event input details
+
+- **Decision:** Times must carry a UTC offset; a time without one is 422. They are stored in UTC. `price` is rounded to two decimals, capped at 1000000; `capacity` is capped at 100000. A blank `address` is stored as missing. `starts_at` in the past on create is 422 `STARTS_IN_PAST`; on edit it is not checked.
+- **Reason:** A time without an offset could mean any zone. The caps stop typing mistakes. The brief asks for a future start only on create, and an admin must be able to fix a past event.
+- **Rejected:** Assuming Europe/Belgrade for times without an offset.
