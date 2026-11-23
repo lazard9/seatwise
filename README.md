@@ -95,6 +95,13 @@ uv run uvicorn app.main:create_app --factory --reload
 
 The app refuses to start without a `JWT_SECRET` of at least 32 bytes.
 
+Registration always creates an attendee. To get other roles (from `backend/`):
+
+```bash
+uv run python -m scripts.seed_users --password <password>          # admin@, organizer@, attendee@example.com
+uv run python -m scripts.set_role --email you@example.com --role admin  # an account that already exists
+```
+
 ### Frontend
 
 Needs Node 26 (see `.nvmrc`; with nvm: `nvm install 26` and `nvm use 26`).
