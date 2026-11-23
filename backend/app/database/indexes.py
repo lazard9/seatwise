@@ -10,6 +10,21 @@ INDEXES: dict[str, list[IndexModel]] = {
         # The admin user list, newest first.
         IndexModel([("created_at", DESCENDING), ("_id", DESCENDING)], name="created_at_id"),
     ],
+    "events": [
+        IndexModel([("slug", ASCENDING)], unique=True, name="slug_unique"),
+        # The public list: published, upcoming, soonest first.
+        IndexModel(
+            [("status", ASCENDING), ("starts_at", ASCENDING), ("_id", ASCENDING)],
+            name="status_starts_at_id",
+        ),
+        IndexModel([("city", ASCENDING)], name="city"),
+        IndexModel([("category", ASCENDING)], name="category"),
+        IndexModel([("organizer_id", ASCENDING)], name="organizer_id"),
+    ],
+    "reservations": [
+        # Cancel and delete look up the reservations of one event.
+        IndexModel([("event_id", ASCENDING)], name="event_id"),
+    ],
     "refresh_tokens": [
         IndexModel([("token_hash", ASCENDING)], unique=True, name="token_hash_unique"),
         IndexModel([("family_id", ASCENDING)], name="family_id"),

@@ -11,7 +11,7 @@ The project is built around the problems the domain forces:
 - **Rules that depend on time and history:** you can review only an event you attended, after it ended.
 - **Moderation:** comments written by one user, hidden by another.
 
-> **Status:** phase 1 done: sign up, sign in with refresh rotation, sign out, roles and the admin users page, in the API and the browser. Next: phase 2, events. See [docs/progress.md](docs/progress.md) for where the work stands and [PROJECT_BRIEF.md](PROJECT_BRIEF.md) for the full specification.
+> **Status:** phase 1 done: sign up, sign in with refresh rotation, sign out, roles and the admin users page. Phase 2 (events) in progress: create, edit, publish, cancel and delete work in the API. See [docs/progress.md](docs/progress.md) for where the work stands and [PROJECT_BRIEF.md](PROJECT_BRIEF.md) for the full specification.
 
 ## Stack
 
@@ -51,6 +51,28 @@ Field rules: email is stored lowercased; password 8 to 128 characters; display n
 | PATCH | `/users/{id}/role` | Body `{role}`. 200 with the user. 403 `CANNOT_CHANGE_OWN_ROLE`, 404 `USER_NOT_FOUND`, 400 `INVALID_ID` |
 
 Other roles get 403 `FORBIDDEN_ROLE`. A new role applies on the user's next request; their tokens stay valid.
+
+### Events
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| POST | `/events` | Organizer or admin. 201 with a `draft` owned by the caller. 422 `STARTS_IN_PAST` |
+| GET | `/events/{id}` | 200 with the event. 404 `EVENT_NOT_FOUND`, 400 `INVALID_ID` |
+| GET | `/events/by-slug/{slug}` | Same as above, by slug |
+| PUT | `/events/{id}` | Replaces the editable fields. 403 `NOT_EVENT_OWNER` or `EVENT_PAST`, 409 `CAPACITY_BELOW_SEATS_TAKEN` or `EVENT_CANCELLED` |
+| POST | `/events/{id}/publish` | Draft to published. 400 `INVALID_TRANSITION` |
+| POST | `/events/{id}/cancel` | Cancels the event and its confirmed reservations. 400 `INVALID_TRANSITION` |
+| DELETE | `/events/{id}` | Admin only. 204. 409 `EVENT_HAS_RESERVATIONS` |
+
+Body for create and edit: `title` (3 to 120), `description`, `category` (`music`, `theatre`, `talk`, `workshop`, `sport`, `festival`, `other`), `city`, `venue`, optional `address`, `starts_at` and `ends_at` with a UTC offset (end after start), `capacity` (1 to 100000), `price` (0 or more, 0 means free). The organizer, status, seats and ratings are set by the backend; such fields in the body are ignored.
+
+Visibility: published events are public. Drafts and cancelled events are visible only to their organizer and admins; for anyone else they are 404. Change rules:
+
+- The organizer of the event and admins may edit, publish and cancel.
+- After the event ends, only an admin may still change it.
+- The slug comes from the title once, with Serbian Latin and Cyrillic transliterated (`Ђорђе` and `Đorđe` both give `djordje`). A taken slug gets `-2`, `-3`. Editing the title keeps the slug.
+
+The response adds `seats_left` and `is_past` (true once `ends_at` has passed). `image` is `null` until image uploads arrive.
 
 ### Health
 

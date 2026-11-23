@@ -45,6 +45,13 @@ class Conflict(DomainError):
     default_code = "CONFLICT"
 
 
+class Unprocessable(DomainError):
+    """Input that is well formed but breaks a rule that needs the current time or data."""
+
+    status_code = status.HTTP_422_UNPROCESSABLE_CONTENT
+    default_code = "UNPROCESSABLE"
+
+
 def error_response(exc: DomainError) -> JSONResponse:
     """The response the handler sends. Routes use it when they must add to it, e.g. a cookie."""
     headers = {"WWW-Authenticate": "Bearer"} if isinstance(exc, Unauthorized) else None
