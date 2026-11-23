@@ -146,11 +146,11 @@ Each entry records a choice the brief left open or changed: the date, the decisi
 - **Reason:** Publishing as a separate step lets an organizer check the event before anyone sees it. Allowing cancel on a draft gives organizers a way to drop a draft, since delete is admin only. Using the end, not the start, as "past" keeps a running festival editable and listed.
 - **Rejected:** A `status` field in the create body (two ways to publish), cancel from published only (a draft could never be removed by its organizer).
 
-## 2026-11-23: Hidden events answer 404, cancelled events are hidden
+## 2026-11-23: Cancelled events stay public, drafts answer 404
 
-- **Decision:** A draft or cancelled event is 404 `EVENT_NOT_FOUND` for anyone but its organizer and admins, the same as a missing event. Another organizer editing a published event they can see gets 403 `NOT_EVENT_OWNER`.
-- **Reason:** The brief makes only published events public. A 403 would tell a stranger that a draft with that id or slug exists.
-- **Open question:** attendees who had a reservation may want to open a cancelled event by its link and see that it was cancelled. Phase 3 can make cancelled events readable by link if wanted.
+- **Decision:** Published and cancelled events can be read by anyone. A draft is 404 `EVENT_NOT_FOUND` for anyone but its organizer and admins, the same as a missing event. Another organizer editing an event they can see gets 403 `NOT_EVENT_OWNER`. The brief was changed to match.
+- **Reason:** The project owner decided that people must see that an event was cancelled: someone with a reservation or a shared link gets the event with `status: cancelled`, not a 404. A 403 for a draft would tell a stranger that a draft with that id or slug exists.
+- **Rejected:** Hiding cancelled events like drafts (the first version, from the brief as it was).
 
 ## 2026-11-23: Slugs are picked before insert and retried on a clash
 
