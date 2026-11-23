@@ -175,3 +175,9 @@ Each entry records a choice the brief left open or changed: the date, the decisi
 - **Decision:** Times must carry a UTC offset; a time without one is 422. They are stored in UTC. `price` is rounded to two decimals, capped at 1000000; `capacity` is capped at 100000. A blank `address` is stored as missing. `starts_at` in the past on create is 422 `STARTS_IN_PAST`; on edit it is not checked.
 - **Reason:** A time without an offset could mean any zone. The caps stop typing mistakes. The brief asks for a future start only on create, and an admin must be able to fix a past event.
 - **Rejected:** Assuming Europe/Belgrade for times without an offset.
+
+## 2026-11-23: The public list shows published events only; the site comes before uploads
+
+- **Decision:** `GET /events` lists only published events. Cancelled events stay readable by id and slug but are left out of the list. Phase 2 order changes: after the list API comes the home page and the event page, then image uploads, then the organizer pages.
+- **Reason:** The list is for events people can still go to. The project owner wants to see events in the browser as early as possible; the home page and event page do not need uploads, since `image` is `null` until then.
+- **Rejected:** Cancelled events in the list with a label (clutters the list), uploads before any page.

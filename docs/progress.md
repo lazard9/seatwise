@@ -37,9 +37,9 @@ At the end: 134 backend tests, 127 frontend tests.
 ## Phase 2: Events (in progress)
 
 1. [x] Event model and rules: create, edit, get by id and slug, statuses (draft, publish, cancel), delete, slugs with Serbian transliteration, ownership, indexes. 216 backend tests
-2. [ ] Public list: filters, sort, pagination, past events, `/events/cities`
-3. [ ] Image upload pipeline: content check, resize, WebP, EXIF stripped, local storage behind a protocol, placeholders
-4. [ ] Frontend: home page list with filters in the URL, event page
+2. [ ] Public list: published only (cancelled stay readable by link), filters, sort, pagination, past events, `/events/cities`
+3. [ ] Frontend: home page list with filters in the URL, event page
+4. [ ] Image upload pipeline: content check, resize, WebP, EXIF stripped, local storage behind a protocol, placeholders
 5. [ ] Frontend: organizer pages, my events, event form with image upload
 
 ## Next step
