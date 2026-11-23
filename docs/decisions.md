@@ -193,3 +193,15 @@ Each entry records a choice the brief left open or changed: the date, the decisi
   - Prices are in RSD: `Free` for 0, otherwise the amount without decimals.
 - **Reason:** The owner wants to browse by tag and by person, and keep past events findable. HTML is what a rich text editor produces and the event page can render it directly, but only after the server removes scripts, event handlers and unknown tags, since another user wrote it.
 - **Rejected:** A fixed tag list kept by admins (more work for admins), Markdown for the description (the owner asked for a rich text editor), `include_past=true` from the first brief (the archive needs past events only, in a different order).
+
+## 2026-11-23: How the description is cleaned and stored
+
+- **Decision:** The server cleans the description with `nh3` (a Rust HTML sanitizer) against a fixed list of tags. Links keep only http, https and mailto URLs and get `rel="noopener noreferrer nofollow"`. Scripts go with their content; other unknown tags, `h1` included, go but keep their text. The limit is 20000 characters of HTML, and a description with no text after cleaning is 422. A plain text copy, `description_text`, is stored for search and never returned.
+- **Reason:** Another user writes this HTML and the event page renders it, so cleaning on the server is what stops stored XSS; the frontend editor is not a security boundary. An allow list is safe by default: a tag nobody thought about is removed. Searching the plain text avoids matching words inside tags.
+- **Rejected:** Bleach (deprecated), a deny list of dangerous tags (misses new ones), cleaning only in the browser.
+
+## 2026-11-23: Tags and participants
+
+- **Decision:** Tags are trimmed, spaces collapsed, lowercased and deduplicated; 2 to 30 characters, up to 10. Participants are `{name, role}` with an optional role; the backend adds `key` from the name with the slug function. The same person may appear twice with different roles. Both lists are replaced whole on edit.
+- **Reason:** Lowercased tags make "Jazz" and "jazz" one filter value. A key from the name lets the person filter match `Ђорђе` and `Đorđe` as one person and gives a clean URL.
+- **Rejected:** A separate people collection with ids (a profile page is not asked for; names are enough for a filter).

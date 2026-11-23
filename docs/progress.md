@@ -37,7 +37,7 @@ At the end: 134 backend tests, 127 frontend tests.
 ## Phase 2: Events (in progress)
 
 1. [x] Event model and rules: create, edit, get by id and slug, statuses (draft, publish, cancel), delete, slugs with Serbian transliteration, ownership, indexes. 216 backend tests
-2. [ ] Event fields: tags, participants, rich text description sanitized on the server
+2. [x] Event fields: tags, participants, rich text description sanitized on the server. 252 backend tests
 3. [ ] Public list: published only (cancelled stay readable by link), filters (category, tag, city, organizer, person, date, price, seats), `when=upcoming|past`, sort, pagination, `/events/cities`, `/events/tags`
 4. [ ] Frontend: home page grid (3, 4 or 6 columns) with filters in the URL, archive, event page; minimal typographic design
 5. [ ] Image upload pipeline: content check, resize, WebP, EXIF stripped, local storage behind a protocol, placeholders
@@ -45,7 +45,7 @@ At the end: 134 backend tests, 127 frontend tests.
 
 ## Next step
 
-Phase 2, step 2: tags, participants and the sanitized rich text description on the event model.
+Phase 2, step 3: public list with filters (category, tag, city, organizer, person, date, price, seats), `when=upcoming|past`, sort, pagination, `/events/cities` and `/events/tags`.
 
 ## Local environment
 
