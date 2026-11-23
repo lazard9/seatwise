@@ -13,9 +13,10 @@ from pymongo.errors import DuplicateKeyError
 from app.database.transactions import run_in_transaction
 from app.errors import BadRequest, Conflict, Forbidden, NotFound, Unprocessable
 from app.ids import parse_object_id
-from app.models.events import Category, EventPublic, EventStatus, EventWrite
+from app.models.events import Category, EventPublic, EventStatus, EventWrite, Participant
 from app.models.users import Role
 from app.services.users import UserDoc
+from app.utils.html import html_to_text
 from app.utils.slugs import slugify
 from app.utils.time import utcnow
 
@@ -33,7 +34,10 @@ def is_past(doc: EventDoc, now: datetime | None = None) -> bool:
 
 
 def serialize_event(doc: EventDoc, now: datetime | None = None) -> EventPublic:
-    """The only way an event leaves the service layer. `image_public_id` is never included."""
+    """The only way an event leaves the service layer.
+
+    Internal fields (`image_public_id`, `description_text`) are never included.
+    """
     return EventPublic(
         id=str(doc["_id"]),
         title=doc["title"],
@@ -49,6 +53,8 @@ def serialize_event(doc: EventDoc, now: datetime | None = None) -> EventPublic:
         seats_taken=doc["seats_taken"],
         seats_left=max(doc["capacity"] - doc["seats_taken"], 0),
         price=doc["price"],
+        tags=doc.get("tags", []),
+        participants=[Participant(**p) for p in doc.get("participants", [])],
         image=doc.get("image"),
         status=EventStatus(doc["status"]),
         organizer_id=str(doc["organizer_id"]),
@@ -81,6 +87,19 @@ def _not_found() -> NotFound:
 # Create
 
 
+def _stored_fields(data: EventWrite) -> EventDoc:
+    """The editable fields as stored, plus what the backend derives from them."""
+    return {
+        **data.model_dump(),
+        "category": data.category.value,
+        "participants": [
+            {"name": p.name, "role": p.role, "key": slugify(p.name)} for p in data.participants
+        ],
+        # Plain text of the description, for search. Internal, never returned.
+        "description_text": html_to_text(data.description),
+    }
+
+
 async def _free_slug(events: Events, base: str) -> str:
     """`base` if nobody has it, otherwise `base-2`, `base-3` and so on."""
     pattern = f"^{re.escape(base)}(-[0-9]+)?$"
@@ -100,8 +119,7 @@ async def create_event(events: Events, data: EventWrite, organizer: UserDoc) -> 
         raise Unprocessable("The event must start in the future", code="STARTS_IN_PAST")
 
     doc: EventDoc = {
-        **data.model_dump(),
-        "category": data.category.value,
+        **_stored_fields(data),
         "seats_taken": 0,
         "image": None,
         "status": EventStatus.DRAFT.value,
@@ -162,7 +180,7 @@ async def update_event(events: Events, event_id: str, data: EventWrite, user: Us
     if doc["status"] == EventStatus.CANCELLED.value:
         raise Conflict("A cancelled event cannot be edited", code="EVENT_CANCELLED")
 
-    changes = {**data.model_dump(), "category": data.category.value, "updated_at": utcnow()}
+    changes = {**_stored_fields(data), "updated_at": utcnow()}
     # The conditions are checked by the write itself, so a reservation or a cancel that
     # lands between the read above and this update cannot be overwritten.
     updated = await events.find_one_and_update(

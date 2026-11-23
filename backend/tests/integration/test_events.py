@@ -467,3 +467,66 @@ async def test_delete_unknown_event(client: AsyncClient, db: Db) -> None:
     response = await client.delete(f"/events/{ObjectId()}", headers=headers)
 
     assert response.status_code == 404
+
+
+# Tags, participants, rich text description
+
+
+async def test_create_stores_tags_participants_and_clean_description(
+    client: AsyncClient, db: Db
+) -> None:
+    headers = await headers_for(client, db, "owner")
+    body = payload(
+        description='<h2>Program</h2><p onclick="x()">Rock &amp; roll<script>x()</script></p>',
+        tags=["Jazz", " jazz ", "Open Air"],
+        participants=[
+            {"name": "Đorđe Balašević", "role": "Performer"},
+            {"name": "Ana Anić", "role": ""},
+        ],
+    )
+
+    response = await client.post("/events", json=body, headers=headers)
+
+    assert response.status_code == 201, response.text
+    event = response.json()
+    assert event["description"] == "<h2>Program</h2><p>Rock &amp; roll</p>"
+    assert event["tags"] == ["jazz", "open air"]
+    assert event["participants"] == [
+        {"name": "Đorđe Balašević", "role": "Performer", "key": "djordje-balasevic"},
+        {"name": "Ana Anić", "role": None, "key": "ana-anic"},
+    ]
+    assert "description_text" not in event
+    doc = await stored(db, ObjectId(event["id"]))
+    assert doc["description_text"] == "Program Rock & roll"
+
+
+async def test_edit_replaces_tags_and_participants(client: AsyncClient, db: Db) -> None:
+    headers = await headers_for(client, db, "owner")
+    created = await client.post(
+        "/events",
+        json=payload(tags=["jazz"], participants=[{"name": "Ana Anić"}]),
+        headers=headers,
+    )
+    event_id = created.json()["id"]
+
+    response = await client.put(
+        f"/events/{event_id}",
+        json=payload(tags=["blues"], participants=[], description="<p>New text</p>"),
+        headers=headers,
+    )
+
+    assert response.status_code == 200, response.text
+    assert response.json()["tags"] == ["blues"]
+    assert response.json()["participants"] == []
+    assert (await stored(db, ObjectId(event_id)))["description_text"] == "New text"
+
+
+async def test_description_with_no_text_is_rejected(client: AsyncClient, db: Db) -> None:
+    headers = await headers_for(client, db, "owner")
+
+    response = await client.post(
+        "/events", json=payload(description="<script>x()</script>"), headers=headers
+    )
+
+    assert response.status_code == 422
+    assert await db.events.count_documents({}) == 0

@@ -1,3 +1,4 @@
+import re
 from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Annotated, Self
@@ -12,9 +13,16 @@ from pydantic import (
     model_validator,
 )
 
+from app.utils.html import html_to_text, sanitize_html
+
 TITLE_MIN_LENGTH = 3
 TITLE_MAX_LENGTH = 120
-DESCRIPTION_MAX_LENGTH = 5000
+# Measured on the HTML the editor sends, tags included.
+DESCRIPTION_MAX_LENGTH = 20_000
+TAG_MIN_LENGTH = 2
+TAG_MAX_LENGTH = 30
+TAGS_MAX = 10
+PARTICIPANTS_MAX = 20
 CAPACITY_MAX = 100_000
 PRICE_MAX = 1_000_000
 
@@ -50,6 +58,27 @@ def _round_price(value: float) -> float:
     return round(value, 2)
 
 
+def _clean_description(value: str) -> str:
+    cleaned = sanitize_html(value)
+    if not html_to_text(cleaned):
+        raise ValueError("description must contain text")
+    return cleaned
+
+
+_SPACES = re.compile(r"\s+")
+
+
+def _normalize_tag(value: object) -> object:
+    # "  Jazz   Night " and "jazz night" are the same tag.
+    if isinstance(value, str):
+        return _SPACES.sub(" ", value).strip().lower()
+    return value
+
+
+def _unique[T](values: list[T]) -> list[T]:
+    return list(dict.fromkeys(values))
+
+
 Title = Annotated[
     str,
     StringConstraints(
@@ -57,7 +86,9 @@ Title = Annotated[
     ),
 ]
 Description = Annotated[
-    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=DESCRIPTION_MAX_LENGTH)
+    str,
+    StringConstraints(min_length=1, max_length=DESCRIPTION_MAX_LENGTH),
+    AfterValidator(_clean_description),
 ]
 City = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=80)]
 Venue = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=120)]
@@ -67,6 +98,29 @@ Address = Annotated[AddressText | None, BeforeValidator(_blank_to_none)]
 UtcDatetime = Annotated[AwareDatetime, AfterValidator(_to_utc)]
 Capacity = Annotated[int, Field(ge=1, le=CAPACITY_MAX)]
 Price = Annotated[float, Field(ge=0, le=PRICE_MAX), AfterValidator(_round_price)]
+Tag = Annotated[
+    str,
+    BeforeValidator(_normalize_tag),
+    StringConstraints(min_length=TAG_MIN_LENGTH, max_length=TAG_MAX_LENGTH),
+]
+Tags = Annotated[list[Tag], AfterValidator(_unique), Field(max_length=TAGS_MAX)]
+PersonName = Annotated[str, StringConstraints(strip_whitespace=True, min_length=2, max_length=80)]
+PersonRoleText = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=40)
+]
+PersonRole = Annotated[PersonRoleText | None, BeforeValidator(_blank_to_none)]
+
+
+class ParticipantWrite(BaseModel):
+    name: PersonName
+    role: PersonRole = None
+
+
+class Participant(BaseModel):
+    name: str
+    role: str | None
+    # From the name, the same way as slugs: links and the person filter use it.
+    key: str
 
 
 class EventWrite(BaseModel):
@@ -82,6 +136,8 @@ class EventWrite(BaseModel):
     ends_at: UtcDatetime
     capacity: Capacity
     price: Price = 0
+    tags: Tags = []
+    participants: Annotated[list[ParticipantWrite], Field(max_length=PARTICIPANTS_MAX)] = []
 
     @model_validator(mode="after")
     def _ends_after_start(self) -> Self:
@@ -105,6 +161,8 @@ class EventPublic(BaseModel):
     seats_taken: int
     seats_left: int
     price: float
+    tags: list[str]
+    participants: list[Participant]
     image: str | None
     status: EventStatus
     organizer_id: str

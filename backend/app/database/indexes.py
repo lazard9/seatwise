@@ -20,6 +20,9 @@ INDEXES: dict[str, list[IndexModel]] = {
         IndexModel([("city", ASCENDING)], name="city"),
         IndexModel([("category", ASCENDING)], name="category"),
         IndexModel([("organizer_id", ASCENDING)], name="organizer_id"),
+        # Multikey indexes: one entry per tag and per participant.
+        IndexModel([("tags", ASCENDING)], name="tags"),
+        IndexModel([("participants.key", ASCENDING)], name="participants_key"),
     ],
     "reservations": [
         # Cancel and delete look up the reservations of one event.

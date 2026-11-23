@@ -64,13 +64,17 @@ Other roles get 403 `FORBIDDEN_ROLE`. A new role applies on the user's next requ
 | POST | `/events/{id}/cancel` | Cancels the event and its confirmed reservations. 400 `INVALID_TRANSITION` |
 | DELETE | `/events/{id}` | Admin only. 204. 409 `EVENT_HAS_RESERVATIONS` |
 
-Body for create and edit: `title` (3 to 120), `description`, `category` (`music`, `theatre`, `talk`, `workshop`, `sport`, `festival`, `other`), `city`, `venue`, optional `address`, `starts_at` and `ends_at` with a UTC offset (end after start), `capacity` (1 to 100000), `price` (0 or more, 0 means free). The organizer, status, seats and ratings are set by the backend; such fields in the body are ignored.
+Body for create and edit: `title` (3 to 120), `description` (HTML from the rich text editor, up to 20000 characters; see below), `category` (`music`, `theatre`, `talk`, `workshop`, `sport`, `festival`, `other`), `city`, `venue`, optional `address`, `starts_at` and `ends_at` with a UTC offset (end after start), `capacity` (1 to 100000), `price` in RSD (0 or more, 0 means free), `tags` (up to 10, each 2 to 30 characters; stored lowercased with spaces collapsed, duplicates dropped), `participants` (up to 20 of `{name, role}`; name 2 to 80, role optional, up to 40). The organizer, status, seats and ratings are set by the backend; such fields in the body are ignored.
 
 Visibility: published and cancelled events are public, so a link to a cancelled event shows that it was cancelled. Drafts are visible only to their organizer and admins; for anyone else they are 404. Change rules:
 
 - The organizer of the event and admins may edit, publish and cancel.
 - After the event ends, only an admin may still change it.
 - The slug comes from the title once, with Serbian Latin and Cyrillic transliterated (`Ђорђе` and `Đorđe` both give `djordje`). A taken slug gets `-2`, `-3`. Editing the title keeps the slug.
+
+The description is cleaned on the server. It keeps `p`, `br`, `h2`, `h3`, `h4`, `strong`, `em`, `u`, `s`, `a` (http, https and mailto links only, with `rel="noopener noreferrer nofollow"`), `ul`, `ol`, `li` and `blockquote`. Scripts are removed with their content; other tags, `h1` included, are removed but their text stays. A description with no text left is 422.
+
+Each participant in the response has a `key` made from the name the same way as slugs (`Đorđe Balašević` gives `djordje-balasevic`); the person filter will use it.
 
 The response adds `seats_left` and `is_past` (true once `ends_at` has passed). `image` is `null` until image uploads arrive.
 
