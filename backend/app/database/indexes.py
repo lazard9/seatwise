@@ -1,12 +1,14 @@
 from typing import Any
 
-from pymongo import ASCENDING, IndexModel
+from pymongo import ASCENDING, DESCENDING, IndexModel
 from pymongo.asynchronous.database import AsyncDatabase
 
 # Collection name -> indexes. Each later phase adds its collections here (brief, section 5).
 INDEXES: dict[str, list[IndexModel]] = {
     "users": [
         IndexModel([("email", ASCENDING)], unique=True, name="email_unique"),
+        # The admin user list, newest first.
+        IndexModel([("created_at", DESCENDING), ("_id", DESCENDING)], name="created_at_id"),
     ],
     "refresh_tokens": [
         IndexModel([("token_hash", ASCENDING)], unique=True, name="token_hash_unique"),

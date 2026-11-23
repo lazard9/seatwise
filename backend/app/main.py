@@ -8,7 +8,7 @@ from app.config import Settings, get_settings
 from app.database.client import create_client
 from app.database.indexes import ensure_indexes
 from app.errors import register_error_handlers
-from app.routes import auth, health
+from app.routes import auth, health, users
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -41,4 +41,5 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     register_error_handlers(app)
     app.include_router(health.router)
     app.include_router(auth.router)
+    app.include_router(users.router)
     return app

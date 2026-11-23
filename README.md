@@ -43,6 +43,15 @@ The refresh token lives in the `seatwise_refresh` cookie: `HttpOnly`, `SameSite=
 
 Field rules: email is stored lowercased; password 8 to 128 characters; display name 2 to 50 characters.
 
+### Users (admin only)
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| GET | `/users` | Newest first. Query: `page` (from 1), `page_size` (1 to 100, default 20), `role`, `search` (email or display name, ignores case). Returns `{items, total, page, page_size}` |
+| PATCH | `/users/{id}/role` | Body `{role}`. 200 with the user. 403 `CANNOT_CHANGE_OWN_ROLE`, 404 `USER_NOT_FOUND`, 400 `INVALID_ID` |
+
+Other roles get 403 `FORBIDDEN_ROLE`. A new role applies on the user's next request; their tokens stay valid.
+
 ### Health
 
 | Method | Path | Notes |

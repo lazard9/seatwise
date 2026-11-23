@@ -32,6 +32,10 @@ class UserCreate(BaseModel):
     display_name: DisplayName
 
 
+class RoleUpdate(BaseModel):
+    role: Role
+
+
 class UserPublic(BaseModel):
     id: str
     email: str
