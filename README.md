@@ -66,7 +66,7 @@ Other roles get 403 `FORBIDDEN_ROLE`. A new role applies on the user's next requ
 
 Body for create and edit: `title` (3 to 120), `description`, `category` (`music`, `theatre`, `talk`, `workshop`, `sport`, `festival`, `other`), `city`, `venue`, optional `address`, `starts_at` and `ends_at` with a UTC offset (end after start), `capacity` (1 to 100000), `price` (0 or more, 0 means free). The organizer, status, seats and ratings are set by the backend; such fields in the body are ignored.
 
-Visibility: published events are public. Drafts and cancelled events are visible only to their organizer and admins; for anyone else they are 404. Change rules:
+Visibility: published and cancelled events are public, so a link to a cancelled event shows that it was cancelled. Drafts are visible only to their organizer and admins; for anyone else they are 404. Change rules:
 
 - The organizer of the event and admins may edit, publish and cancel.
 - After the event ends, only an admin may still change it.

@@ -69,8 +69,9 @@ def _is_owner(doc: EventDoc, user: UserDoc | None) -> bool:
 
 
 def can_see(doc: EventDoc, user: UserDoc | None) -> bool:
-    """Published events are public. Drafts and cancelled events: their organizer and admins."""
-    return doc["status"] == EventStatus.PUBLISHED.value or _is_admin(user) or _is_owner(doc, user)
+    """Published and cancelled events are public, so a link to a cancelled event says so.
+    Drafts: their organizer and admins."""
+    return doc["status"] != EventStatus.DRAFT.value or _is_admin(user) or _is_owner(doc, user)
 
 
 def _not_found() -> NotFound:

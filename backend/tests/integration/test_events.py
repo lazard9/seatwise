@@ -188,28 +188,30 @@ async def test_simultaneous_creates_get_distinct_slugs(client: AsyncClient, db: 
 # Read
 
 
-async def test_published_event_is_public_by_id_and_slug(client: AsyncClient, db: Db) -> None:
-    event = await make_event(db, status="published")
+@pytest.mark.parametrize("event_status", ["published", "cancelled"])
+@pytest.mark.parametrize("who", ["admin", "owner", "other", "attendee", "anonymous"])
+async def test_published_and_cancelled_events_are_public(
+    client: AsyncClient, db: Db, event_status: str, who: str
+) -> None:
+    # A cancelled event stays readable, so people with its link learn that it was cancelled.
+    event = await make_event(db, status=event_status)
+    headers = await headers_for(client, db, who)
 
-    by_id = await client.get(f"/events/{event['_id']}")
-    by_slug = await client.get(f"/events/by-slug/{event['slug']}")
+    by_id = await client.get(f"/events/{event['_id']}", headers=headers)
+    by_slug = await client.get(f"/events/by-slug/{event['slug']}", headers=headers)
 
     assert by_id.status_code == by_slug.status_code == 200
     assert by_id.json() == by_slug.json()
-    assert by_id.json()["status"] == "published"
+    assert by_id.json()["status"] == event_status
 
 
 # Matrix: "See drafts" is all for admin, own for organizer, none for attendee and anonymous.
-# The brief makes only published events public, so cancelled events follow the same row.
 @pytest.mark.parametrize(
     ("who", "status"),
     [("admin", 200), ("owner", 200), ("other", 404), ("attendee", 404), ("anonymous", 404)],
 )
-@pytest.mark.parametrize("event_status", ["draft", "cancelled"])
-async def test_hidden_event_per_role(
-    client: AsyncClient, db: Db, who: str, status: int, event_status: str
-) -> None:
-    event = await make_event(db, status=event_status)
+async def test_draft_per_role(client: AsyncClient, db: Db, who: str, status: int) -> None:
+    event = await make_event(db)
     headers = await headers_for(client, db, who)
 
     by_id = await client.get(f"/events/{event['_id']}", headers=headers)

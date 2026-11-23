@@ -149,7 +149,7 @@ All indexes are created at application startup.
 ## 6. Business rules
 
 ### Events
-- Only `published` events are visible publicly. Drafts are visible to their organizer and admins.
+- Published and cancelled events are visible publicly; a cancelled event shows that it was cancelled. Drafts are visible to their organizer and admins.
 - `starts_at` must be in the future on create. `ends_at` must be after `starts_at`.
 - `capacity` cannot be reduced below `seats_taken` (409).
 - A past event cannot be edited except by admin.
