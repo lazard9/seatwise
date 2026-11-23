@@ -31,16 +31,17 @@ Steps, one or more commits each:
 1. [x] Domain errors and the `{"detail", "code"}` error body, user model, Argon2 password hashing, users index
 2. [x] Register, login, access token, `/auth/me`
 3. [x] Refresh token rotation with reuse detection, logout, two-tab concurrency test
-4. [ ] Roles, admin routes `GET /users` and `PATCH /users/{id}/role`, a test per role
+4. [x] Roles, admin routes `GET /users` and `PATCH /users/{id}/role`, a test per role
 5. [ ] Frontend: auth store, API client with refresh on 401, login and register pages, route guards, admin users page
 
 ## Next step
 
-Phase 1, step 4: admin routes `GET /users` and `PATCH /users/{id}/role` (an admin cannot change their own role), with a test per role.
+Phase 1, step 5: frontend auth. Zustand auth store, API client that refreshes once on 401, login and register pages, route guards, admin users page.
 
 ## Local environment
 
 - MongoDB 9.0 Windows service, replica set `rs0`, `mongodb://localhost:27017/?replicaSet=rs0`.
 - Python 3.14 through `uv`. Node 26 through nvm.
 - Backend: `cd backend`, `uv run uvicorn app.main:create_app --factory --reload`.
+- Demo accounts: `cd backend`, `uv run python -m scripts.seed_users --password <password>`.
 - Frontend: `cd frontend`, `npm run dev`.

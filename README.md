@@ -11,7 +11,7 @@ The project is built around the problems the domain forces:
 - **Rules that depend on time and history:** you can review only an event you attended, after it ended.
 - **Moderation:** comments written by one user, hidden by another.
 
-> **Status:** phase 1 in progress. Register, login, refresh rotation and logout are done; admin user routes and the frontend sign-in come next. See [docs/progress.md](docs/progress.md) for where the work stands and [PROJECT_BRIEF.md](PROJECT_BRIEF.md) for the full specification.
+> **Status:** phase 1 in progress. The auth and user API is done (register, login, refresh rotation, logout, admin user routes); the frontend sign-in comes next. See [docs/progress.md](docs/progress.md) for where the work stands and [PROJECT_BRIEF.md](PROJECT_BRIEF.md) for the full specification.
 
 ## Stack
 

@@ -97,3 +97,27 @@ Each entry records a choice the brief left open or changed: the date, the decisi
 - **Decision:** Cookie `seatwise_refresh`, path `/auth`, `HttpOnly`, `SameSite=Lax`, `Secure` from `REFRESH_COOKIE_SECURE`. A failed refresh clears it. Logout needs no access token and always returns 204.
 - **Reason:** Path `/auth` keeps the cookie off every other API call. `SameSite=Lax` stops other sites from sending it with a POST, which covers CSRF for the two cookie routes. Logout must work after the access token has expired, and a page that signs out should never see an error.
 - **Rejected:** Path `/auth/refresh` only (logout also needs the cookie), a CSRF token (not needed with `SameSite=Lax` and no state change on GET).
+
+## 2026-11-23: One page shape for every list
+
+- **Decision:** Paginated endpoints take `page` (from 1) and `page_size` (1 to 100, default 20) and return `{items, total, page, page_size}`. `GET /users` is the first; events, reviews and comments will use the same model.
+- **Reason:** One shape means one frontend pager and one set of tests. Page numbers fit the brief, which puts `page` in the URL. The sort ends with `_id`, so equal timestamps never repeat or skip a row across pages.
+- **Rejected:** Cursor pagination (no page numbers to show or share in a URL), a different shape per resource.
+
+## 2026-11-23: Role changes and the last admin
+
+- **Decision:** `PATCH /users/{id}/role` refuses the caller's own id (403 `CANNOT_CHANGE_OWN_ROLE`). An admin may change another admin. Setting the role a user already has returns 200. A role change does not end the user's sessions.
+- **Reason:** The brief says "not self". It also means at least one admin always remains: the acting admin can never remove their own access. Sessions can stay because the role is read from the database on every request.
+- **Rejected:** Counting admins before every change (the self rule already covers it), revoking sessions on a role change (not needed).
+
+## 2026-11-23: Admin user search is a literal, case-insensitive match
+
+- **Decision:** `search` on `GET /users` matches anywhere in the email or display name, ignoring case. The text is escaped before it goes into the regex, and limited to 100 characters.
+- **Reason:** The admin page needs to find a person by part of a name. Escaping keeps `a.b` from matching `axb` and stops a caller from sending a costly pattern. The user count is small enough that a scan is fine.
+- **Rejected:** A text index (word-based, so no partial matches), no search.
+
+## 2026-11-23: Scripts for demo users and the first admin
+
+- **Decision:** `scripts/seed_users.py` creates `admin@`, `organizer@` and `attendee@example.com` with a password given on the command line; running it again keeps passwords and restores the roles. `scripts/set_role.py` sets the role of an existing account by email.
+- **Reason:** Registration always creates an attendee, so without a script nobody could become admin. The password is an argument so no known default password exists. `example.com` is reserved for examples and passes email validation.
+- **Rejected:** An admin email in the environment that is promoted at startup (startup should not change data), a default demo password.
