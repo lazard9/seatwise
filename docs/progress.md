@@ -7,7 +7,7 @@ Where the project stands. Update this file at the end of every work session and 
 | # | Phase | State |
 | --- | --- | --- |
 | 0 | Skeleton | Done |
-| 1 | Auth and users | In progress |
+| 1 | Auth and users | Done |
 | 2 | Events | Not started |
 | 3 | Reservations | Not started |
 | 4 | Favorites | Not started |
@@ -24,19 +24,29 @@ Where the project stands. Update this file at the end of every work session and 
 - Frontend: Vite, React, TypeScript, TanStack Router and Query, Tailwind, Vitest. 2 tests.
 - CI: backend against MongoDB 9.0 replica set, frontend lint, test and build.
 
-## Phase 1: Auth and users (in progress)
-
-Steps, one or more commits each:
+## Phase 1: Auth and users (done)
 
 1. [x] Domain errors and the `{"detail", "code"}` error body, user model, Argon2 password hashing, users index
 2. [x] Register, login, access token, `/auth/me`
 3. [x] Refresh token rotation with reuse detection, logout, two-tab concurrency test
-4. [x] Roles, admin routes `GET /users` and `PATCH /users/{id}/role`, a test per role
-5. [ ] Frontend: auth store, API client with refresh on 401, login and register pages, route guards, admin users page
+4. [x] Roles, admin routes `GET /users` and `PATCH /users/{id}/role`, a test per role; scripts for demo users and the first admin
+5. [x] Frontend: API client that refreshes once on 401, auth store, session check on start, sign in, sign up and sign out, route guards, permission matrix, admin users page
+
+At the end: 134 backend tests, 127 frontend tests.
+
+## Phase 2: Events (not started)
+
+Planned steps:
+
+1. [ ] Event model and rules: create, edit, get by id and slug, statuses (draft, publish, cancel), slugs with Serbian transliteration, ownership, indexes
+2. [ ] Public list: filters, sort, pagination, past events, `/events/cities`
+3. [ ] Image upload pipeline: content check, resize, WebP, EXIF stripped, local storage behind a protocol, placeholders
+4. [ ] Frontend: home page list with filters in the URL, event page
+5. [ ] Frontend: organizer pages, my events, event form with image upload
 
 ## Next step
 
-Phase 1, step 5: frontend auth. Zustand auth store, API client that refreshes once on 401, login and register pages, route guards, admin users page.
+Phase 2, step 1: event model, create, edit, get, statuses and slugs, with a test per rule and per role.
 
 ## Local environment
 

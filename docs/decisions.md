@@ -121,3 +121,21 @@ Each entry records a choice the brief left open or changed: the date, the decisi
 - **Decision:** `scripts/seed_users.py` creates `admin@`, `organizer@` and `attendee@example.com` with a password given on the command line; running it again keeps passwords and restores the roles. `scripts/set_role.py` sets the role of an existing account by email.
 - **Reason:** Registration always creates an attendee, so without a script nobody could become admin. The password is an argument so no known default password exists. `example.com` is reserved for examples and passes email validation.
 - **Rejected:** An admin email in the environment that is promoted at startup (startup should not change data), a default demo password.
+
+## 2026-11-23: Session check before any route renders
+
+- **Decision:** The root route's `beforeLoad` awaits one refresh call per page load. Guards then read the Zustand store directly. The access token lives only in memory.
+- **Reason:** The brief asks that guarded routes render only after the check. Doing it in the root route means every guard sees `signedIn` or `guest`, never `unknown`, and a reload on `/admin/users` stays there. Memory keeps the token away from scripts that read storage.
+- **Rejected:** Rendering first and redirecting when the check finishes (a guest briefly sees a guarded page, an admin briefly sees the sign-in page), `localStorage` for the access token.
+
+## 2026-11-23: Axios uses its fetch adapter; tests mock the API with MSW
+
+- **Decision:** The API client is Axios with `adapter: 'fetch'`. Frontend tests run against MSW handlers, and a request with no handler fails the test.
+- **Reason:** jsdom's `XMLHttpRequest` enforces CORS in its own way, so every mocked request failed as a network error. With fetch, tests and browsers take the same path. MSW tests the real client, interceptors included, instead of mocking our own modules.
+- **Rejected:** Mocking `api/` modules with `vi.mock` (would not test the refresh logic), adding CORS headers to every mock.
+
+## 2026-11-23: Sign-in redirects and the no-access page
+
+- **Decision:** A guest on a guarded page goes to `/login?redirect=<path>` and returns there after signing in. The target must start with one `/`; anything else goes to `/`. A signed-in user without the role sees a "No access" page inside the normal layout. Signing up signs the user in at once.
+- **Reason:** A `redirect` that accepts `//other.site` sends users to another site after they type their password (open redirect). Showing "No access" tells the user why, where a silent redirect home would look like a bug. Asking for the password twice after sign-up adds a step for nothing.
+- **Rejected:** Redirecting a wrong role to `/`, a separate sign-in step after sign-up.
