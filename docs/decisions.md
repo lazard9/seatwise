@@ -181,3 +181,15 @@ Each entry records a choice the brief left open or changed: the date, the decisi
 - **Decision:** `GET /events` lists only published events. Cancelled events stay readable by id and slug but are left out of the list. Phase 2 order changes: after the list API comes the home page and the event page, then image uploads, then the organizer pages.
 - **Reason:** The list is for events people can still go to. The project owner wants to see events in the browser as early as possible; the home page and event page do not need uploads, since `image` is `null` until then.
 - **Rejected:** Cancelled events in the list with a label (clutters the list), uploads before any page.
+
+## 2026-11-23: Tags, participants, rich text description and an archive
+
+- **Decision:** The project owner extended the brief:
+  - Events get free `tags` (up to 10, lowercased; the form suggests existing ones) and `participants` (up to 20 people with a name and an optional role such as director or performer). Each participant has a `key` made from the name, so a click on a name lists all their events.
+  - The description is rich text with h2 to h4 and no h1. It is stored as HTML that the backend sanitizes against a fixed list of tags and attributes.
+  - `GET /events` gets `tag`, `person`, `organizer` and `when` (`upcoming` or `past`). The archive at `/archive` lists past events, latest first.
+  - The home page grid has 3, 4 or 6 columns, chosen by the visitor and kept in the URL. Phones show one or two.
+  - Design: minimal and typographic, no boxes or shadows around cards.
+  - Prices are in RSD: `Free` for 0, otherwise the amount without decimals.
+- **Reason:** The owner wants to browse by tag and by person, and keep past events findable. HTML is what a rich text editor produces and the event page can render it directly, but only after the server removes scripts, event handlers and unknown tags, since another user wrote it.
+- **Rejected:** A fixed tag list kept by admins (more work for admins), Markdown for the description (the owner asked for a rich text editor), `include_past=true` from the first brief (the archive needs past events only, in a different order).

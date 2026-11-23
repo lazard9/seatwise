@@ -61,8 +61,10 @@ All collections store `_id` as ObjectId, serialized as string `id` in the API. A
 | --- | --- | --- |
 | title | string | required, 3–120 chars |
 | slug | string | unique, generated from title, transliterates Serbian Latin and Cyrillic |
-| description | string | required |
+| description | string | required; rich text stored as sanitized HTML: paragraphs, h2 to h4 (no h1), bold, italic, links, lists, quotes |
 | category | enum | `music`, `theatre`, `talk`, `workshop`, `sport`, `festival`, `other` |
+| tags | string[] | 0 to 10 free tags chosen by the organizer, stored lowercased; the form suggests existing tags |
+| participants | object[] | 0 to 20 people taking part: `name` and optional `role` (director, performer, speaker); each has a `key` from the name for filtering |
 | city | string | required |
 | venue | string | required |
 | address | string | optional |
@@ -70,7 +72,7 @@ All collections store `_id` as ObjectId, serialized as string `id` in the API. A
 | ends_at | datetime | required, after `starts_at` |
 | capacity | int | ≥ 1 |
 | seats_taken | int | maintained by the backend only, never by the client |
-| price | number | ≥ 0; 0 means free. Informational, no payments |
+| price | number | ≥ 0 in RSD; 0 means free. Informational, no payments |
 | image | string | upload URL or bundled placeholder |
 | image_public_id | string | internal, never returned |
 | status | enum | `draft`, `published`, `cancelled` |
@@ -136,6 +138,7 @@ Same purpose as in a standard two-token auth model and upload pipeline: hashed r
 | events | `slug` unique | links |
 | events | `status, starts_at` | public listing of upcoming events |
 | events | `city`, `category`, `organizer_id` | filters, "my events" |
+| events | `tags`, `participants.key` | tag and person filters |
 | reservations | `event_id, user_id` unique, partial on `status: confirmed` | one active reservation per user per event |
 | reservations | `user_id, created_at` | "my reservations" |
 | reviews | `event_id, user_id` unique | one review per user per event |
@@ -218,8 +221,9 @@ Prefix-free paths; behind Nginx they live under `/api`.
 ### Events
 | Method | Path | Notes |
 | --- | --- | --- |
-| GET | `/events` | paginated; `search`, `city`, `category`, `date_from`, `date_to`, `min_price`, `max_price`, `free`, `has_seats`, `sort` (`soonest` default, `newest`, `price_asc`, `price_desc`, `rating_desc`), `mine`, `page`, `page_size` |
+| GET | `/events` | paginated; `search`, `city`, `category`, `tag`, `person`, `organizer`, `date_from`, `date_to`, `min_price`, `max_price`, `free`, `has_seats`, `when` (`upcoming` default, `past` for the archive), `sort` (`soonest` default for upcoming, `latest` default for past, `newest`, `price_asc`, `price_desc`, `rating_desc`), `mine`, `page`, `page_size`. Lists published events only |
 | GET | `/events/cities` | distinct cities for the filter |
+| GET | `/events/tags` | most used tags, for filters and form suggestions |
 | GET | `/events/{id}` | |
 | GET | `/events/by-slug/{slug}` | |
 | POST | `/events` | 201 |
@@ -228,7 +232,7 @@ Prefix-free paths; behind Nginx they live under `/api`.
 | POST | `/events/{id}/cancel` | cancels event and its reservations |
 | DELETE | `/events/{id}` | admin, only without reservations |
 
-Every sort ends with `_id` as a tiebreaker. Past events are excluded by default; `include_past=true` includes them.
+Every sort ends with `_id` as a tiebreaker. Upcoming means not yet ended (`ends_at` in the future), so running events stay listed. Past events appear only with `when=past`. Cancelled events are not listed but stay readable by id and slug.
 
 ### Reservations
 | Method | Path | Notes |
@@ -286,7 +290,8 @@ Error bodies have a stable shape: `{"detail": "...", "code": "EVENT_FULL"}` for 
 
 | Route | Page | Access |
 | --- | --- | --- |
-| `/` | Upcoming events: search, filters, sort, pagination, all in the URL | public |
+| `/` | Upcoming events from today on, soonest first: search, filters (category, tags, city, organizer, person, date, price), grid of 3, 4 or 6 columns chosen by the visitor, pagination, all in the URL | public |
+| `/archive` | Past events, latest first, same filters | public |
 | `/events/:slug` | Event page: details, seats left, reserve, favorite, reviews, comments | public, actions need sign-in |
 | `/me/reservations` | Upcoming and past reservations, cancel | signed in |
 | `/me/favorites` | Saved events | signed in |
@@ -302,6 +307,9 @@ Notes:
 - Reserve and favorite use optimistic updates with rollback on error. Reservation shows the backend's 409 message ("Not enough seats").
 - Route-based code splitting from the start.
 - Dark mode set before first paint by an inline script, so there is no flash.
+- Design: minimal and typographic, in the spirit of applied art. No boxes or shadows around cards; structure comes from whitespace, rules and type. Clear fonts with a small, fixed type scale.
+- Prices: `Free` for 0, otherwise the amount in RSD without decimals, formatted for the UI locale.
+- The description editor is a rich text editor with h2, h3 and h4 headings and no h1 (the event title is the only h1 on the page).
 
 ## 10. Phases
 
