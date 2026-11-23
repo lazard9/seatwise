@@ -4,6 +4,7 @@ import { useState } from 'react'
 
 import { signOut } from '../../auth/session'
 import { useAuthStore } from '../../store/auth'
+import { permissions } from '../../utils/permissions'
 import { Button } from '../ui/Button'
 
 const linkClass = 'font-medium text-slate-700 hover:text-slate-900'
@@ -45,6 +46,11 @@ export function UserMenu() {
 
   return (
     <div className="flex items-center gap-4">
+      {permissions.manageUsers(user) && (
+        <Link to="/admin/users" className={linkClass}>
+          Users
+        </Link>
+      )}
       <span className="text-sm text-slate-600">
         Signed in as <span className="font-medium text-slate-900">{user.display_name}</span>
       </span>

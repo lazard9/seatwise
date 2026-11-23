@@ -1,6 +1,7 @@
 import type { QueryClient } from '@tanstack/react-query'
 import { createRouter, type RouterHistory } from '@tanstack/react-router'
 
+import { RouteErrorPage } from './pages/RouteErrorPage'
 import { routeTree } from './routeTree.gen'
 
 export interface RouterContext {
@@ -16,6 +17,8 @@ export function createAppRouter(queryClient: QueryClient, history?: RouterHistor
     // Loaders read through TanStack Query, which owns caching.
     defaultPreloadStaleTime: 0,
     scrollRestoration: true,
+    // Renders inside the parent layout, so the header stays on an error.
+    defaultErrorComponent: RouteErrorPage,
   })
 }
 
