@@ -40,7 +40,7 @@ At the end: 134 backend tests, 127 frontend tests.
 2. [x] Event fields: tags, participants, rich text description sanitized on the server. 252 backend tests
 3. [ ] Public list: published only (cancelled stay readable by link), filters (category, tag, city, organizer, person, date, price, seats), `when=upcoming|past`, sort, pagination, `/events/cities`, `/events/tags`
 4. [ ] Frontend: home page grid (3, 4 or 6 columns) with filters in the URL, archive, event page; minimal typographic design
-5. [ ] Image upload pipeline: content check, resize, WebP, EXIF stripped, local storage behind a protocol, placeholders
+5. [ ] Image upload pipeline: content check, resize, WebP, EXIF stripped, local storage and Cloudinary behind a protocol, placeholders. The Cloudinary keys are in the git-ignored root `.env`; copy them to `backend/.env` in this step
 6. [ ] Frontend: organizer pages, my events, event form with rich text editor (h2 to h4), tags with suggestions, participants, image upload
 
 ## Next step
