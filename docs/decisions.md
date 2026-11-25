@@ -205,3 +205,15 @@ Each entry records a choice the brief left open or changed: the date, the decisi
 - **Decision:** Tags are trimmed, spaces collapsed, lowercased and deduplicated; 2 to 30 characters, up to 10. Participants are `{name, role}` with an optional role; the backend adds `key` from the name with the slug function. The same person may appear twice with different roles. Both lists are replaced whole on edit.
 - **Reason:** Lowercased tags make "Jazz" and "jazz" one filter value. A key from the name lets the person filter match `Ђорђе` and `Đorđe` as one person and gives a clean URL.
 - **Rejected:** A separate people collection with ids (a profile page is not asked for; names are enough for a filter).
+
+## 2026-11-25: The public event list
+
+- **Decision:** `GET /events` takes its query parameters as one Pydantic model. Filters combine with AND. `when=upcoming` (default) keeps events that have not ended and sorts soonest first; `when=past` keeps ended events and sorts latest first. A date range keeps events that overlap it. Search is literal and case-insensitive over title, venue, city, the plain description text, tags and participant names. `mine=true` replaces the published-only rule with "organizer is the caller" and keeps every status; `when` still applies. Contradicting values, such as a minimum price above the maximum, give an empty page instead of an error.
+- **Reason:** Overlap keeps a festival that started yesterday in today's list. Searching the stored plain text means `strong` never matches `<strong>`. One model keeps the parameters, their limits and their defaults in one place for the route and the tests.
+- **Rejected:** A text index (word-based, no partial matches, one per collection), `include_past=true` from the first brief (mixes the archive into the main list).
+
+## 2026-11-25: Organizer name is copied into the event, cities sort the Serbian way
+
+- **Decision:** An event stores `organizer_name` from the organizer's display name when it is created and returns it. `/events/cities` sorts by the transliterated name, so `Čačak` comes after `Beograd`. `/events/tags` counts tags over published events.
+- **Reason:** Cards and the organizer filter need the name, and a copy needs no lookup per list. Display names cannot be changed yet; when that arrives, the change must update the copies in the same transaction. Plain Unicode order would put Č, Š and Ž after Z.
+- **Rejected:** A `$lookup` on users for every list (slower, more code for a value that does not change).
