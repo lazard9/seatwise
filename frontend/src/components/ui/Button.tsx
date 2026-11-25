@@ -1,10 +1,12 @@
 import type { ComponentProps } from 'react'
 
-type Variant = 'primary' | 'secondary'
+type Variant = 'primary' | 'secondary' | 'text'
 
 const VARIANTS: Record<Variant, string> = {
-  primary: 'bg-indigo-700 text-white hover:bg-indigo-800',
-  secondary: 'border border-slate-300 bg-white text-slate-900 hover:bg-slate-50',
+  primary: 'bg-ink px-4 py-2 text-paper hover:bg-accent',
+  secondary: 'border border-ink px-4 py-2 text-ink hover:bg-ink hover:text-paper',
+  // Reads as a link; for actions in running text and the header.
+  text: 'text-small text-ink hover:underline hover:underline-offset-4',
 }
 
 interface ButtonProps extends ComponentProps<'button'> {
@@ -15,7 +17,7 @@ export function Button({ variant = 'primary', className = '', type = 'button', .
   return (
     <button
       type={type}
-      className={`rounded-md px-4 py-2 font-medium disabled:cursor-not-allowed disabled:opacity-60 ${VARIANTS[variant]} ${className}`}
+      className={`font-medium disabled:cursor-not-allowed disabled:opacity-60 ${VARIANTS[variant]} ${className}`}
       {...props}
     />
   )

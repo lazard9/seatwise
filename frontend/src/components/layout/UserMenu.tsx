@@ -7,7 +7,7 @@ import { useAuthStore } from '../../store/auth'
 import { permissions } from '../../utils/permissions'
 import { Button } from '../ui/Button'
 
-const linkClass = 'font-medium text-slate-700 hover:text-slate-900'
+const linkClass = 'text-small text-ink no-underline hover:underline hover:underline-offset-4'
 
 export function UserMenu() {
   const status = useAuthStore((state) => state.status)
@@ -23,7 +23,7 @@ export function UserMenu() {
 
   if (!user) {
     return (
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
         <Link to="/login" className={linkClass}>
           Sign in
         </Link>
@@ -45,16 +45,16 @@ export function UserMenu() {
   }
 
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
       {permissions.manageUsers(user) && (
         <Link to="/admin/users" className={linkClass}>
           Users
         </Link>
       )}
-      <span className="text-sm text-slate-600">
-        Signed in as <span className="font-medium text-slate-900">{user.display_name}</span>
+      <span className="text-small text-muted">
+        Signed in as <span className="font-medium text-ink">{user.display_name}</span>
       </span>
-      <Button variant="secondary" onClick={handleSignOut} disabled={signingOut}>
+      <Button variant="text" onClick={handleSignOut} disabled={signingOut}>
         Sign out
       </Button>
     </div>

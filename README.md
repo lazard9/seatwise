@@ -11,7 +11,7 @@ The project is built around the problems the domain forces:
 - **Rules that depend on time and history:** you can review only an event you attended, after it ended.
 - **Moderation:** comments written by one user, hidden by another.
 
-> **Status:** phase 1 done: sign up, sign in with refresh rotation, sign out, roles and the admin users page. Phase 2 (events) in progress: create, edit, publish, cancel and delete work in the API. See [docs/progress.md](docs/progress.md) for where the work stands and [PROJECT_BRIEF.md](PROJECT_BRIEF.md) for the full specification.
+> **Status:** phase 1 done: sign up, sign in with refresh rotation, sign out, roles and the admin users page. Phase 2 (events) in progress: the event API is done, and the home page, archive and event page work in the browser. See [docs/progress.md](docs/progress.md) for where the work stands and [PROJECT_BRIEF.md](PROJECT_BRIEF.md) for the full specification.
 
 ## Stack
 
@@ -163,7 +163,9 @@ App: <http://localhost:5173>. The backend must be running. Pages so far:
 
 | Path | Who |
 | --- | --- |
-| `/` | everyone |
+| `/` | everyone: upcoming events, filters in the URL, a grid of 3, 4 or 6 columns |
+| `/archive` | everyone: past events, latest first, the same filters |
+| `/events/:slug` | everyone: the event page; drafts only for their organizer and admins |
 | `/login`, `/register` | guests; `?redirect=/path` returns there after signing in |
 | `/admin/users` | admins: search, role filter, pages and role changes |
 

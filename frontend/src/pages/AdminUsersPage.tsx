@@ -38,21 +38,21 @@ export function AdminUsersPage() {
 
   return (
     <section>
-      <h1 className="text-2xl font-bold">Users</h1>
+      <h1 className="display text-h2">Users</h1>
       <UserFilter key={`${search ?? ''}|${role ?? ''}`} search={search} role={role} />
 
-      {query.isPending && <p className="mt-6 text-slate-600">Loading users…</p>}
+      {query.isPending && <p className="mt-6 text-muted">Loading users…</p>}
       {query.isError && <FormError message={apiErrorMessage(query.error)} />}
 
       {query.data && (
         <>
-          <p className="mt-6 text-sm text-slate-600" aria-live="polite">
+          <p className="mt-6 text-sm text-muted" aria-live="polite">
             {query.data.total === 1 ? '1 user' : `${query.data.total} users`}
           </p>
           {query.data.items.length > 0 ? (
             <UsersTable users={query.data.items} />
           ) : (
-            <p className="mt-4 text-slate-600">No users match.</p>
+            <p className="mt-4 text-muted">No users match.</p>
           )}
           <Pager page={page} totalPages={totalPages} />
         </>
@@ -89,12 +89,12 @@ function UserFilter({ search, role }: { search: string | undefined; role: Role |
         />
       </div>
       <div className="flex flex-col gap-1">
-        <label htmlFor="role-filter" className="text-sm font-medium text-slate-800">
+        <label htmlFor="role-filter" className="text-sm font-medium text-ink">
           Role
         </label>
         <select
           id="role-filter"
-          className="rounded-md border border-slate-300 px-3 py-2"
+          className="border border-rule bg-transparent px-3 py-2"
           {...form.register('role')}
         >
           <option value="">All roles</option>
@@ -123,7 +123,7 @@ function UsersTable({ users }: { users: User[] }) {
       <FormError message={mutation.isError ? apiErrorMessage(mutation.error) : undefined} />
       <div className="mt-2 overflow-x-auto">
         <table className="w-full text-left text-sm">
-          <thead className="border-b border-slate-200 text-slate-600">
+          <thead className="border-b border-rule text-muted">
             <tr>
               <th scope="col" className="py-2 pr-4 font-medium">Name</th>
               <th scope="col" className="py-2 pr-4 font-medium">Email</th>
@@ -135,10 +135,10 @@ function UsersTable({ users }: { users: User[] }) {
             {users.map((user) => {
               const isSelf = user.id === currentUserId
               return (
-                <tr key={user.id} className="border-b border-slate-100">
+                <tr key={user.id} className="border-b border-rule">
                   <td className="py-2 pr-4">
                     {user.display_name}
-                    {isSelf && <span className="ml-2 text-slate-500">(you)</span>}
+                    {isSelf && <span className="ml-2 text-muted">(you)</span>}
                   </td>
                   <td className="py-2 pr-4">{user.email}</td>
                   <td className="py-2 pr-4">
@@ -147,7 +147,7 @@ function UsersTable({ users }: { users: User[] }) {
                       value={user.role}
                       // The backend refuses it too: an admin cannot change their own role.
                       disabled={isSelf || mutation.isPending}
-                      className="rounded-md border border-slate-300 px-2 py-1 disabled:opacity-60"
+                      className="border border-rule bg-transparent px-2 py-1 disabled:opacity-60"
                       onChange={(event) =>
                         mutation.mutate({ userId: user.id, role: event.target.value as Role })
                       }
@@ -174,7 +174,7 @@ function Pager({ page, totalPages }: { page: number; totalPages: number }) {
   if (totalPages <= 1) {
     return null
   }
-  const linkClass = 'font-medium text-indigo-700 underline'
+  const linkClass = 'font-medium text-accent underline'
   return (
     <nav aria-label="Pages" className="mt-4 flex items-center gap-4 text-sm">
       {page > 1 && (

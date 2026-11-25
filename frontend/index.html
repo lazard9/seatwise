@@ -5,6 +5,13 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Seatwise</title>
+    <script>
+      // Runs before the first paint, so a saved dark or light choice never flashes.
+      try {
+        var theme = localStorage.getItem("seatwise-theme");
+        if (theme === "dark" || theme === "light") document.documentElement.dataset.theme = theme;
+      } catch (e) {}
+    </script>
     <meta name="description" content="Discover events and reserve your seats." />
   </head>
   <body>

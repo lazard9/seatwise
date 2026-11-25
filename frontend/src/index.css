@@ -1,7 +1,216 @@
 @import 'tailwindcss';
+/* Fonts are bundled with the app, so no request goes to a font host. Both have Cyrillic. */
+@import '@fontsource-variable/onest';
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+
+/* Dark mode follows data-theme on <html> when set, otherwise the system setting. */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+/* Ink on paper with one accent. Every color is a token, defined for both themes. */
+:root {
+  --paper: #f6f6f3;
+  --ink: #121212;
+  --muted: #64645f;
+  --rule: #d8d8d2;
+  --accent: #2337d1;
+  --field: #e9e9e4;
+  --danger: #b3261e;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --paper: #101112;
+    --ink: #ecece7;
+    --muted: #9a9a93;
+    --rule: #2c2d2f;
+    --accent: #8c9bff;
+    --field: #1b1c1e;
+    --danger: #ff8a80;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --paper: #101112;
+  --ink: #ecece7;
+  --muted: #9a9a93;
+  --rule: #2c2d2f;
+  --accent: #8c9bff;
+  --field: #1b1c1e;
+  --danger: #ff8a80;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-rule: var(--rule);
+  --color-accent: var(--accent);
+  --color-field: var(--field);
+  --color-danger: var(--danger);
+
+  --font-sans: 'Onest Variable', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', monospace;
+
+  /* The whole type scale: 12, 14, 16, 20, 28 and the page title. */
+  --text-label: 0.75rem;
+  --text-label--line-height: 1.3;
+  --text-small: 0.875rem;
+  --text-small--line-height: 1.45;
+  --text-body: 1rem;
+  --text-body--line-height: 1.55;
+  --text-h3: 1.25rem;
+  --text-h3--line-height: 1.25;
+  --text-h2: 1.75rem;
+  --text-h2--line-height: 1.15;
+  --text-title: clamp(2.2rem, 5vw, 4rem);
+  --text-title--line-height: 1.02;
+}
 
 @layer base {
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-sans);
+  }
+
   :focus-visible {
-    @apply outline-2 outline-offset-2 outline-indigo-600;
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+}
+
+/* A small uppercase mono line above or beside a title: dates, categories, labels.
+   Always a p or span, never a heading. */
+@utility eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  line-height: var(--text-label--line-height);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+/* Large headings: weight 600 with slightly tight tracking. */
+@utility display {
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
+/* Motifs that stand in for a missing event image, one per category. */
+@layer components {
+  .motif-music {
+    background-image: repeating-radial-gradient(
+      circle at 70% 30%,
+      transparent 0 14px,
+      var(--ink) 14px 15px
+    );
+  }
+  .motif-theatre {
+    background-image: radial-gradient(circle at 50% 100%, var(--accent) 0 38%, transparent 38.5%);
+  }
+  .motif-talk {
+    background-image: repeating-linear-gradient(180deg, transparent 0 18px, var(--ink) 18px 19px);
+    background-size: 62% 100%;
+    background-repeat: no-repeat;
+    background-position: 18% 0;
+  }
+  .motif-workshop {
+    background-image:
+      linear-gradient(var(--rule) 1px, transparent 1px),
+      linear-gradient(90deg, var(--rule) 1px, transparent 1px),
+      linear-gradient(var(--accent), var(--accent));
+    background-size:
+      22px 22px,
+      22px 22px,
+      44px 44px;
+    background-repeat: repeat, repeat, no-repeat;
+    background-position:
+      0 0,
+      0 0,
+      66px 88px;
+  }
+  .motif-sport {
+    background-image: repeating-linear-gradient(135deg, transparent 0 22px, var(--ink) 22px 24px);
+  }
+  .motif-festival {
+    background-image: radial-gradient(var(--accent) 3px, transparent 3.5px);
+    background-size: 18px 18px;
+  }
+  .motif-other {
+    background-image: linear-gradient(90deg, var(--ink) 1px, transparent 1px);
+    background-size: 33.333% 100%;
+  }
+}
+
+/* The event description arrives as HTML from the server, so its tags cannot carry
+   utility classes. This block is the one place with element selectors. */
+.event-description {
+  display: grid;
+  gap: 0.9rem;
+  max-width: 62ch;
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
+
+  & h2 {
+    margin-top: 1rem;
+    font-size: var(--text-h2);
+    line-height: var(--text-h2--line-height);
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    text-wrap: balance;
+  }
+  & h3 {
+    margin-top: 0.5rem;
+    font-size: var(--text-h3);
+    line-height: var(--text-h3--line-height);
+    font-weight: 600;
+  }
+  & h4 {
+    font-family: var(--font-mono);
+    font-size: var(--text-small);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  & a {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+  & ul,
+  & ol {
+    display: grid;
+    gap: 0.35rem;
+    padding-left: 1.25rem;
+  }
+  & ul {
+    list-style: disc;
+  }
+  & ol {
+    list-style: decimal;
+  }
+  & blockquote {
+    border-left: 1px solid var(--ink);
+    padding-left: 1rem;
+    font-size: var(--text-h3);
+    line-height: 1.4;
+  }
+  & strong {
+    font-weight: 600;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
   }
 }

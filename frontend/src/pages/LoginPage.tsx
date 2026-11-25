@@ -32,7 +32,7 @@ export function LoginPage() {
 
   return (
     <section className="mx-auto max-w-sm">
-      <h1 className="text-2xl font-bold">Sign in</h1>
+      <h1 className="display text-h2">Sign in</h1>
       <form
         noValidate
         className="mt-6 flex flex-col gap-4"
@@ -57,9 +57,9 @@ export function LoginPage() {
           {mutation.isPending ? 'Signing in…' : 'Sign in'}
         </Button>
       </form>
-      <p className="mt-4 text-sm text-slate-600">
+      <p className="mt-4 text-sm text-muted">
         No account yet?{' '}
-        <Link to="/register" search={{ redirect: redirectTo }} className="font-medium text-indigo-700 underline">
+        <Link to="/register" search={{ redirect: redirectTo }} className="font-medium text-accent underline">
           Create one
         </Link>
       </p>

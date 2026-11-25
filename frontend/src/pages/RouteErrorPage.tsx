@@ -7,13 +7,13 @@ export function RouteErrorPage({ error }: ErrorComponentProps) {
   const forbidden = error instanceof ForbiddenError
   return (
     <section>
-      <h1 className="text-2xl font-bold">{forbidden ? 'No access' : 'Something went wrong'}</h1>
-      <p className="mt-2 text-slate-600">
+      <h1 className="display text-h2">{forbidden ? 'No access' : 'Something went wrong'}</h1>
+      <p className="mt-2 text-muted">
         {forbidden
           ? 'Your account does not have access to this page.'
           : 'The page could not be loaded. Please try again.'}
       </p>
-      <Link to="/" className="mt-4 inline-block font-medium text-indigo-700 underline">
+      <Link to="/" className="mt-4 inline-block font-medium text-accent underline">
         Back to upcoming events
       </Link>
     </section>

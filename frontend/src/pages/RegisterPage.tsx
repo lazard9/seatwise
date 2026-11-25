@@ -53,7 +53,7 @@ export function RegisterPage() {
 
   return (
     <section className="mx-auto max-w-sm">
-      <h1 className="text-2xl font-bold">Create an account</h1>
+      <h1 className="display text-h2">Create an account</h1>
       <form
         noValidate
         className="mt-6 flex flex-col gap-4"
@@ -86,9 +86,9 @@ export function RegisterPage() {
           {mutation.isPending ? 'Creating account…' : 'Create account'}
         </Button>
       </form>
-      <p className="mt-4 text-sm text-slate-600">
+      <p className="mt-4 text-sm text-muted">
         Already have an account?{' '}
-        <Link to="/login" search={{ redirect: redirectTo }} className="font-medium text-indigo-700 underline">
+        <Link to="/login" search={{ redirect: redirectTo }} className="font-medium text-accent underline">
           Sign in
         </Link>
       </p>

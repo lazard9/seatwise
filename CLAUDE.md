@@ -85,6 +85,10 @@ Rules:
 - `utils/permissions.ts` mirrors the permission matrix. UI hides what a role cannot do; it never replaces backend checks.
 - Every interactive element is reachable by keyboard and has a visible focus state. Every input has a label.
 - Strict TypeScript. No `any` without a comment explaining why.
+- Styling is Tailwind with the design tokens in `src/index.css` (`@theme`): colors, fonts and the type scale. No raw colors in components, no BEM, no second styling system. The only hand-written element CSS is `.event-description`, for HTML that comes from the server.
+- Design: minimal and typographic. No boxes or shadows around cards; structure comes from whitespace, rules and type. Large headings use weight 600 (the `display` utility).
+- An eyebrow (a small label above or beside a title) is a `p` or `span` with the `eyebrow` utility, never a heading.
+- Layouts work from 360px wide up, with no horizontal scroll. Check phone and desktop widths before calling a page done.
 
 ## 5. Testing rules
 
