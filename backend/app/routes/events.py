@@ -1,10 +1,14 @@
-from fastapi import APIRouter, status
+from typing import Annotated
+
+from fastapi import APIRouter, Query, status
 
 from app.auth.dependencies import AdminUser, OptionalUser, OrganizerUser
 from app.database.dependencies import Database
-from app.models.events import EventPublic, EventWrite
+from app.models.common import Page
+from app.models.events import EventListQuery, EventPublic, EventWrite
 from app.services import events as events_service
 from app.services.events import serialize_event
+from app.utils.time import utcnow
 
 router = APIRouter(prefix="/events", tags=["events"])
 
@@ -15,7 +19,37 @@ async def create_event(data: EventWrite, user: OrganizerUser, db: Database) -> E
     return serialize_event(await events_service.create_event(db.events, data, user))
 
 
-# Declared before /{event_id}, so "by-slug" is never read as an id.
+@router.get("")
+async def list_events(
+    query: Annotated[EventListQuery, Query()], user: OptionalUser, db: Database
+) -> Page[EventPublic]:
+    """Published events, upcoming by default. With `mine=true`, the caller's own events in
+    every status."""
+    docs, total = await events_service.list_events(db.events, query, user)
+    now = utcnow()
+    return Page(
+        items=[serialize_event(doc, now) for doc in docs],
+        total=total,
+        page=query.page,
+        page_size=query.page_size,
+    )
+
+
+# The fixed paths below are declared before /{event_id}, so they are never read as an id.
+
+
+@router.get("/cities")
+async def list_cities(db: Database) -> list[str]:
+    """Cities of published events, for the city filter."""
+    return await events_service.list_cities(db.events)
+
+
+@router.get("/tags")
+async def popular_tags(db: Database, limit: Annotated[int, Query(ge=1, le=100)] = 50) -> list[str]:
+    """Tags of published events, most used first, for filters and form suggestions."""
+    return await events_service.popular_tags(db.events, limit)
+
+
 @router.get("/by-slug/{slug}")
 async def get_event_by_slug(slug: str, user: OptionalUser, db: Database) -> EventPublic:
     return serialize_event(await events_service.get_event_by_slug(db.events, slug, user))

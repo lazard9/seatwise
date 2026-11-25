@@ -56,6 +56,9 @@ Other roles get 403 `FORBIDDEN_ROLE`. A new role applies on the user's next requ
 
 | Method | Path | Notes |
 | --- | --- | --- |
+| GET | `/events` | Published events, one page (see below). `mine=true` lists the caller's own events in every status instead; 401 without sign-in |
+| GET | `/events/cities` | Cities of published events, past ones included, in alphabetical order (Č sorts with C) |
+| GET | `/events/tags` | Tags of published events, most used first. `limit` 1 to 100, default 50 |
 | POST | `/events` | Organizer or admin. 201 with a `draft` owned by the caller. 422 `STARTS_IN_PAST` |
 | GET | `/events/{id}` | 200 with the event. 404 `EVENT_NOT_FOUND`, 400 `INVALID_ID` |
 | GET | `/events/by-slug/{slug}` | Same as above, by slug |
@@ -76,7 +79,24 @@ The description is cleaned on the server. It keeps `p`, `br`, `h2`, `h3`, `h4`, 
 
 Each participant in the response has a `key` made from the name the same way as slugs (`Đorđe Balašević` gives `djordje-balasevic`); the person filter will use it.
 
-The response adds `seats_left` and `is_past` (true once `ends_at` has passed). `image` is `null` until image uploads arrive.
+Query parameters of `GET /events`, all optional and combined with AND:
+
+| Parameter | Meaning |
+| --- | --- |
+| `when` | `upcoming` (default): not yet ended, so running events stay listed. `past`: ended, for the archive |
+| `sort` | `soonest` (default for upcoming), `latest` (default for past), `newest` (created), `price_asc`, `price_desc`, `rating_desc`. Each ends with `_id` |
+| `search` | Up to 100 characters, matched literally and ignoring case in title, venue, city, the description text (not its markup), tags and participant names |
+| `category`, `tag`, `city` | Exact values; `tag` is lowercased first. `city` takes a value from `/events/cities` |
+| `organizer` | Organizer id. 400 `INVALID_ID` when malformed |
+| `person` | A participant `key`, such as `djordje-balasevic` |
+| `date_from`, `date_to` | Times with a UTC offset. An event is kept when it overlaps the range |
+| `min_price`, `max_price`, `free` | Price range in RSD; `free=true` keeps only price 0 |
+| `has_seats` | `true` keeps events with seats left |
+| `page`, `page_size` | From 1; 1 to 100, default 20 |
+
+Cancelled events are never listed, but stay readable by id and slug.
+
+The response adds `seats_left`, `is_past` (true once `ends_at` has passed) and `organizer_name`. `image` is `null` until image uploads arrive.
 
 ### Health
 

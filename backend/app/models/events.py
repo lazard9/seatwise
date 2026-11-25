@@ -13,6 +13,7 @@ from pydantic import (
     model_validator,
 )
 
+from app.models.common import DEFAULT_PAGE_SIZE, PageNumber, PageSize
 from app.utils.html import html_to_text, sanitize_html
 
 TITLE_MIN_LENGTH = 3
@@ -166,8 +167,52 @@ class EventPublic(BaseModel):
     image: str | None
     status: EventStatus
     organizer_id: str
+    organizer_name: str
     rating_avg: float
     rating_count: int
     is_past: bool
     created_at: datetime
     updated_at: datetime
+
+
+class When(StrEnum):
+    UPCOMING = "upcoming"
+    PAST = "past"
+
+
+class EventSort(StrEnum):
+    SOONEST = "soonest"
+    LATEST = "latest"
+    NEWEST = "newest"
+    PRICE_ASC = "price_asc"
+    PRICE_DESC = "price_desc"
+    RATING_DESC = "rating_desc"
+
+
+SearchText = Annotated[str, StringConstraints(strip_whitespace=True, max_length=100)]
+TagFilter = Annotated[str, BeforeValidator(_normalize_tag), StringConstraints(max_length=30)]
+
+
+class EventListQuery(BaseModel):
+    """Query parameters of `GET /events`. Every filter is optional and they combine with AND."""
+
+    page: PageNumber = 1
+    page_size: PageSize = DEFAULT_PAGE_SIZE
+    search: SearchText | None = None
+    category: Category | None = None
+    tag: TagFilter | None = None
+    city: Annotated[str, StringConstraints(strip_whitespace=True, max_length=80)] | None = None
+    organizer: str | None = None
+    person: Annotated[str, StringConstraints(max_length=100)] | None = None
+    # Events that overlap the range: a festival running through date_from is included.
+    date_from: UtcDatetime | None = None
+    date_to: UtcDatetime | None = None
+    min_price: Annotated[float, Field(ge=0)] | None = None
+    max_price: Annotated[float, Field(ge=0)] | None = None
+    free: bool = False
+    has_seats: bool = False
+    when: When = When.UPCOMING
+    # None means the default for `when`: soonest for upcoming, latest for past.
+    sort: EventSort | None = None
+    # The caller's own events in every status, instead of the public list.
+    mine: bool = False

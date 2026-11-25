@@ -4,16 +4,25 @@ from enum import StrEnum
 from typing import Any
 
 from bson import ObjectId
-from pymongo import ReturnDocument
+from pymongo import ASCENDING, DESCENDING, ReturnDocument
 from pymongo.asynchronous.client_session import AsyncClientSession
 from pymongo.asynchronous.collection import AsyncCollection
 from pymongo.asynchronous.database import AsyncDatabase
 from pymongo.errors import DuplicateKeyError
 
 from app.database.transactions import run_in_transaction
-from app.errors import BadRequest, Conflict, Forbidden, NotFound, Unprocessable
+from app.errors import BadRequest, Conflict, Forbidden, NotFound, Unauthorized, Unprocessable
 from app.ids import parse_object_id
-from app.models.events import Category, EventPublic, EventStatus, EventWrite, Participant
+from app.models.events import (
+    Category,
+    EventListQuery,
+    EventPublic,
+    EventSort,
+    EventStatus,
+    EventWrite,
+    Participant,
+    When,
+)
 from app.models.users import Role
 from app.services.users import UserDoc
 from app.utils.html import html_to_text
@@ -58,6 +67,7 @@ def serialize_event(doc: EventDoc, now: datetime | None = None) -> EventPublic:
         image=doc.get("image"),
         status=EventStatus(doc["status"]),
         organizer_id=str(doc["organizer_id"]),
+        organizer_name=doc.get("organizer_name", ""),
         rating_avg=doc["rating_avg"],
         rating_count=doc["rating_count"],
         is_past=is_past(doc, now),
@@ -124,6 +134,8 @@ async def create_event(events: Events, data: EventWrite, organizer: UserDoc) -> 
         "image": None,
         "status": EventStatus.DRAFT.value,
         "organizer_id": organizer["_id"],
+        # Copied, so lists need no lookup. Display names cannot be changed yet.
+        "organizer_name": organizer["display_name"],
         "rating_avg": 0.0,
         "rating_count": 0,
         "created_at": now,
@@ -159,6 +171,105 @@ async def get_event_by_slug(events: Events, slug: str, user: UserDoc | None) -> 
     if doc is None or not can_see(doc, user):
         raise _not_found()
     return doc
+
+
+# List
+
+# Every sort ends with _id, so equal values keep one order across pages.
+_SORTS: dict[EventSort, list[tuple[str, int]]] = {
+    EventSort.SOONEST: [("starts_at", ASCENDING), ("_id", ASCENDING)],
+    EventSort.LATEST: [("starts_at", DESCENDING), ("_id", DESCENDING)],
+    EventSort.NEWEST: [("created_at", DESCENDING), ("_id", DESCENDING)],
+    EventSort.PRICE_ASC: [("price", ASCENDING), ("starts_at", ASCENDING), ("_id", ASCENDING)],
+    EventSort.PRICE_DESC: [("price", DESCENDING), ("starts_at", ASCENDING), ("_id", ASCENDING)],
+    EventSort.RATING_DESC: [
+        ("rating_avg", DESCENDING),
+        ("rating_count", DESCENDING),
+        ("starts_at", ASCENDING),
+        ("_id", ASCENDING),
+    ],
+}
+# Fields the search box looks in. The description is searched as plain text, never as HTML.
+_SEARCH_FIELDS = ("title", "venue", "city", "description_text", "tags", "participants.name")
+
+
+def _list_filter(query: EventListQuery, user: UserDoc | None, now: datetime) -> dict[str, Any]:
+    conditions: list[dict[str, Any]] = []
+    if query.mine:
+        if user is None:
+            raise Unauthorized("Sign in to see your events", code="NOT_AUTHENTICATED")
+        conditions.append({"organizer_id": user["_id"]})
+    else:
+        # Cancelled events stay readable by link but are not listed.
+        conditions.append({"status": EventStatus.PUBLISHED.value})
+
+    if query.when is When.UPCOMING:
+        conditions.append({"ends_at": {"$gt": now}})
+    else:
+        conditions.append({"ends_at": {"$lte": now}})
+    if query.date_from is not None:
+        conditions.append({"ends_at": {"$gte": query.date_from}})
+    if query.date_to is not None:
+        conditions.append({"starts_at": {"$lte": query.date_to}})
+
+    if query.search:
+        # Escaped, so the text is matched literally and cannot be a costly pattern.
+        pattern = {"$regex": re.escape(query.search), "$options": "i"}
+        conditions.append({"$or": [{field: pattern} for field in _SEARCH_FIELDS]})
+    if query.category is not None:
+        conditions.append({"category": query.category.value})
+    if query.tag:
+        conditions.append({"tags": query.tag})
+    if query.city:
+        conditions.append({"city": query.city})
+    if query.organizer:
+        conditions.append({"organizer_id": parse_object_id(query.organizer, what="organizer id")})
+    if query.person:
+        conditions.append({"participants.key": query.person})
+    if query.free:
+        conditions.append({"price": 0})
+    if query.min_price is not None:
+        conditions.append({"price": {"$gte": query.min_price}})
+    if query.max_price is not None:
+        conditions.append({"price": {"$lte": query.max_price}})
+    if query.has_seats:
+        conditions.append({"$expr": {"$lt": ["$seats_taken", "$capacity"]}})
+    return {"$and": conditions}
+
+
+async def list_events(
+    events: Events, query: EventListQuery, user: UserDoc | None
+) -> tuple[list[EventDoc], int]:
+    """One page of events and the total that match. Published only, unless `mine` is set."""
+    mongo_filter = _list_filter(query, user, utcnow())
+    default_sort = EventSort.SOONEST if query.when is When.UPCOMING else EventSort.LATEST
+    total = await events.count_documents(mongo_filter)
+    cursor = (
+        events.find(mongo_filter)
+        .sort(_SORTS[query.sort or default_sort])
+        .skip((query.page - 1) * query.page_size)
+        .limit(query.page_size)
+    )
+    return await cursor.to_list(), total
+
+
+async def list_cities(events: Events) -> list[str]:
+    """Cities of published events, past ones included, in alphabetical order."""
+    cities = await events.distinct("city", {"status": EventStatus.PUBLISHED.value})
+    # Sorted by the transliterated name, so Čačak comes after Beograd, not after Zrenjanin.
+    return sorted(cities, key=lambda city: (slugify(city), city.casefold()))
+
+
+async def popular_tags(events: Events, limit: int) -> list[str]:
+    """Tags of published events, most used first."""
+    pipeline: list[dict[str, Any]] = [
+        {"$match": {"status": EventStatus.PUBLISHED.value}},
+        {"$unwind": "$tags"},
+        {"$group": {"_id": "$tags", "count": {"$sum": 1}}},
+        {"$sort": {"count": DESCENDING, "_id": ASCENDING}},
+        {"$limit": limit},
+    ]
+    return [row["_id"] async for row in await events.aggregate(pipeline)]
 
 
 # Change
